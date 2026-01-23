@@ -45,18 +45,18 @@ export function SalesPipeline({ data = DEFAULT_DATA }: SalesPipelineProps) {
 
   return (
     <Card className="shadow-elevation-2 rounded-lg border border-gray-200 bg-white">
-      <CardHeader className="p-6 border-b border-gray-200 flex flex-row items-center gap-2">
-        <TrendingUp className="w-5 h-5 text-green-500" />
-        <CardTitle className="text-card-title font-semibold text-heading">
+      <CardHeader className="p-4 sm:p-6 border-b border-gray-200 flex flex-row items-center gap-2">
+        <TrendingUp className="w-4 sm:w-5 h-4 sm:h-5 text-green-500" />
+        <CardTitle className="text-base sm:text-card-title font-semibold text-heading">
           Sales Pipeline (Funnel)
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6 h-80">
+      <CardContent className="p-4 sm:p-6 h-64 sm:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
             layout="vertical"
-            margin={{ top: 0, right: 30, left: 100, bottom: 0 }}
+            margin={{ top: 0, right: 20, left: 60, bottom: 0 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis type="number" stroke="#6b7280" domain={[0, maxCount]} />
@@ -64,7 +64,8 @@ export function SalesPipeline({ data = DEFAULT_DATA }: SalesPipelineProps) {
               dataKey="stage"
               type="category"
               stroke="#6b7280"
-              width={90}
+              width={50}
+              tick={{ fontSize: 12 }}
             />
             <Tooltip
               contentStyle={{
@@ -93,15 +94,17 @@ export function SalesPipeline({ data = DEFAULT_DATA }: SalesPipelineProps) {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-        <div className="mt-4 grid grid-cols-5 gap-2 text-xs">
+        <div className="mt-4 grid grid-cols-3 sm:grid-cols-5 gap-2 text-xs">
           {data.map((item) => (
             <div
               key={item.stage}
               className="text-center p-2 bg-gray-50 rounded"
             >
-              <div className="font-semibold text-gray-900">{item.count}</div>
-              <div className="text-gray-600">{item.percentage}%</div>
-              <div className="text-gray-500 truncate">{item.stage}</div>
+              <div className="font-semibold text-gray-900 text-xs">
+                {item.count}
+              </div>
+              <div className="text-gray-600 text-xs">{item.percentage}%</div>
+              <div className="text-gray-500 truncate text-xs">{item.stage}</div>
             </div>
           ))}
         </div>

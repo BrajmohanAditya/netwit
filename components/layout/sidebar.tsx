@@ -103,132 +103,155 @@ const navigationSections = [
 export function Sidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   return (
-    <div
-      className={cn(
-        "flex h-screen flex-col bg-white border-r border-gray-200 shadow-elevation-2 transition-all duration-300 fixed left-0 top-0 z-40",
-        isCollapsed
-          ? "w-sidebar-collapsed md:w-sidebar-collapsed"
-          : "w-sidebar md:w-sidebar",
-      )}
-    >
-      {/* Logo/Branding */}
-      <div className="flex h-header items-center justify-between border-b border-gray-200 px-4 bg-white relative overflow-hidden flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <Logo />
-          {!isCollapsed && (
-            <div className="flex flex-col">
-              <span className="text-xs text-muted">DMS</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Toggle Button */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className={cn(
-          "absolute -right-3 top-20 z-50 flex h-6 w-6 items-center justify-center rounded-full",
-          "bg-primary text-white shadow-elevation-2",
-          "hover:scale-110 transition-transform duration-150",
-          "border border-primary/20",
-        )}
-        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-      >
-        {isCollapsed ? (
-          <ChevronRight className="h-3 w-3" />
-        ) : (
-          <ChevronLeft className="h-3 w-3" />
-        )}
-      </button>
-
-      {/* Navigation */}
-      <nav className="flex-1 space-y-6 px-3 py-6 overflow-y-auto">
-        {navigationSections.map((section) => (
-          <div key={section.title} className="space-y-1">
-            {!isCollapsed && (
-              <h3 className="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-2">
-                {section.title}
-              </h3>
-            )}
-            {section.items.map((item) => {
-              const isActive =
-                pathname === item.href || pathname.startsWith(item.href + "/");
-              const Icon = item.icon;
-              return (
-                <div key={item.name} className="group relative">
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors duration-150 relative",
-                      isCollapsed ? "justify-center" : "justify-between",
-                      isActive
-                        ? "bg-primary-light text-primary border-l-4 border-primary"
-                        : "bg-transparent text-body hover:bg-gray-100 text-gray-700",
-                    )}
-                    title={isCollapsed ? item.name : undefined}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon
-                        className={cn(
-                          "h-5 w-5 transition-colors duration-150",
-                          isActive ? "text-primary" : "text-gray-500",
-                        )}
-                      />
-                      {!isCollapsed && (
-                        <span className="truncate">{item.name}</span>
-                      )}
-                    </div>
-                    {!isCollapsed && item.badge && (
-                      <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white">
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-
-                  {/* Tooltip for collapsed state */}
-                  {isCollapsed && (
-                    <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
-                      {item.name}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      {/* User Profile Section */}
-      <div className="border-t border-gray-200 p-4 bg-white">
+    <>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
         <div
-          className={cn(
-            "flex items-center gap-3 rounded-md p-2 hover:bg-gray-100 transition-colors duration-150 cursor-pointer group relative",
-            isCollapsed && "justify-center",
-          )}
-          title={isCollapsed ? "Profile" : undefined}
-        >
-          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-semibold text-sm">
-            AD
-          </div>
-          {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-heading truncate">
-                Admin User
-              </p>
-              <p className="text-xs text-muted truncate">admin@adaptus.com</p>
-            </div>
-          )}
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
 
-          {/* Tooltip for collapsed state */}
-          {isCollapsed && (
-            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
-              Profile
-            </div>
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "flex h-screen flex-col bg-white border-r border-gray-200 shadow-elevation-2 transition-all duration-300 z-40",
+          "fixed left-0 top-0",
+          "w-sidebar md:w-sidebar",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          isCollapsed ? "md:w-sidebar-collapsed" : "md:w-sidebar",
+        )}
+      >
+        {/* Logo/Branding */}
+        <div className="flex h-header items-center justify-between border-b border-gray-200 px-4 bg-white relative overflow-hidden flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <Logo />
+            {!isCollapsed && (
+              <div className="flex flex-col">
+                <span className="text-xs text-muted">DMS</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Toggle Button - Desktop only */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={cn(
+            "absolute -right-3 top-20 z-50 hidden md:flex h-6 w-6 items-center justify-center rounded-full",
+            "bg-primary text-white shadow-elevation-2",
+            "hover:scale-110 transition-transform duration-150",
+            "border border-primary/20",
           )}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-3 w-3" />
+          ) : (
+            <ChevronLeft className="h-3 w-3" />
+          )}
+        </button>
+
+        {/* Mobile Close Button */}
+        <button
+          onClick={() => setIsMobileOpen(false)}
+          className="md:hidden absolute right-4 top-4 z-50 p-2 text-gray-500 hover:text-gray-700"
+          aria-label="Close sidebar"
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+
+        {/* Navigation */}
+        <nav className="flex-1 space-y-6 px-3 py-6 overflow-y-auto">
+          {navigationSections.map((section) => (
+            <div key={section.title} className="space-y-1">
+              {!isCollapsed && (
+                <h3 className="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                  {section.title}
+                </h3>
+              )}
+              {section.items.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  pathname.startsWith(item.href + "/");
+                const Icon = item.icon;
+                return (
+                  <div key={item.name} className="group relative">
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors duration-150 relative",
+                        isCollapsed ? "justify-center" : "justify-between",
+                        isActive
+                          ? "bg-primary-light text-primary border-l-4 border-primary"
+                          : "bg-transparent text-body hover:bg-gray-100 text-gray-700",
+                      )}
+                      title={isCollapsed ? item.name : undefined}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon
+                          className={cn(
+                            "h-5 w-5 transition-colors duration-150",
+                            isActive ? "text-primary" : "text-gray-500",
+                          )}
+                        />
+                        {!isCollapsed && (
+                          <span className="truncate">{item.name}</span>
+                        )}
+                      </div>
+                      {!isCollapsed && item.badge && (
+                        <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white">
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+
+                    {/* Tooltip for collapsed state */}
+                    {isCollapsed && (
+                      <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
+                        {item.name}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        {/* User Profile Section */}
+        <div className="border-t border-gray-200 p-4 bg-white">
+          <div
+            className={cn(
+              "flex items-center gap-3 rounded-md p-2 hover:bg-gray-100 transition-colors duration-150 cursor-pointer group relative",
+              isCollapsed && "justify-center",
+            )}
+            title={isCollapsed ? "Profile" : undefined}
+          >
+            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-semibold text-sm">
+              AD
+            </div>
+            {!isCollapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-heading truncate">
+                  Admin User
+                </p>
+                <p className="text-xs text-muted truncate">admin@adaptus.com</p>
+              </div>
+            )}
+
+            {/* Tooltip for collapsed state */}
+            {isCollapsed && (
+              <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
+                Profile
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

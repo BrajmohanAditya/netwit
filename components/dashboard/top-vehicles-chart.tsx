@@ -82,15 +82,18 @@ const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 export function TopVehiclesChart({ data = DEFAULT_DATA }: TopVehiclesProps) {
   return (
     <Card className="shadow-elevation-2 rounded-lg border border-gray-200 bg-white">
-      <CardHeader className="p-6 border-b border-gray-200 flex flex-row items-center gap-2">
-        <Car className="w-5 h-5 text-teal-500" />
-        <CardTitle className="text-card-title font-semibold text-heading">
+      <CardHeader className="p-4 sm:p-6 border-b border-gray-200 flex flex-row items-center gap-2">
+        <Car className="w-4 sm:w-5 h-4 sm:h-5 text-teal-500" />
+        <CardTitle className="text-base sm:text-card-title font-semibold text-heading">
           Top 5 Vehicles (Last 6 Months)
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6 h-80">
+      <CardContent className="p-4 sm:p-6 h-64 sm:h-80">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data}>
+          <AreaChart
+            data={data}
+            margin={{ top: 5, right: 15, left: 0, bottom: 5 }}
+          >
             <defs>
               <linearGradient id="colorCivic" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />

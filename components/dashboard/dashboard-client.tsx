@@ -72,14 +72,14 @@ export function DashboardClient({
   });
 
   return (
-    <div className="flex-1 space-y-8 p-8">
+    <div className="flex-1 space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-lg bg-white shadow-elevation-2 p-8 border border-gray-200">
+      <div className="relative overflow-hidden rounded-lg bg-white shadow-elevation-2 p-4 sm:p-6 md:p-8 border border-gray-200">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.05),transparent)]" />
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="flex items-center gap-6 flex-1">
-            <div className="h-16 w-16 rounded-md bg-primary flex items-center justify-center shadow-elevation-3">
-              <LayoutDashboard className="h-8 w-8 text-white" />
+        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4 sm:gap-6 flex-1">
+            <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-md bg-primary flex items-center justify-center shadow-elevation-3">
+              <LayoutDashboard className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3">
@@ -117,7 +117,7 @@ export function DashboardClient({
       />
 
       {/* Two-Column: Lead Source + Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="lg:col-span-2">
           <LeadSourceChart />
         </div>
@@ -132,7 +132,7 @@ export function DashboardClient({
       </div>
 
       {/* Two-Column: Recent Leads + Follow-ups */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <Card className="shadow-elevation-2 rounded-lg border border-gray-200 bg-white">
           <CardHeader className="p-6 border-b border-gray-200">
             <CardTitle className="text-card-title font-semibold text-heading">
@@ -147,7 +147,7 @@ export function DashboardClient({
       </div>
 
       {/* Two-Column: Sales Pipeline + Top Vehicles */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <SalesPipeline />
         <TopVehiclesChart />
       </div>

@@ -28,7 +28,7 @@ export function Breadcrumbs() {
           {index > 0 && <ChevronRight className="h-4 w-4 text-gray-400" />}
           {index === segments.length - 1 ? (
             <span className="text-sm font-semibold text-heading">
-              {segment.name}
+              {/* {segment.name} */}
             </span>
           ) : (
             <Link
