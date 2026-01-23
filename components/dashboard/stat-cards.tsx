@@ -45,9 +45,8 @@ export function StatCards({
       iconBg: "bg-teal-500",
       number: metrics.newInventory.toString(),
       label: "New Inventory",
-      sublabel: `${metrics.totalInventory} total`,
-      change: 0,
-      isPositive: true,
+      change: Math.abs(metrics.newInventoryChange),
+      isPositive: metrics.newInventoryChange >= 0,
       onClick: onInventoryClick,
     },
     {
@@ -56,8 +55,8 @@ export function StatCards({
       number: metrics.activeDeals.toString(),
       label: "Active Deals",
       sublabel: formatCurrency(metrics.pipelineValue),
-      change: 0,
-      isPositive: true,
+      change: Math.abs(metrics.activeDealsChange),
+      isPositive: metrics.activeDealsChange >= 0,
       onClick: onDealsClick,
     },
     {
@@ -75,8 +74,8 @@ export function StatCards({
       number: metrics.dealsClosedMonth.toString(),
       label: "Deals Closed (Month)",
       sublabel: formatCurrency(metrics.revenueMonth),
-      change: 0,
-      isPositive: true,
+      change: Math.abs(metrics.dealsClosedMonthChange),
+      isPositive: metrics.dealsClosedMonthChange >= 0,
       onClick: onRevenueClick,
     },
   ];

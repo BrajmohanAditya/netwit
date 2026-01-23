@@ -83,7 +83,6 @@ export function DashboardClient({
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold text-heading">Dashboard</h1>
                 <Badge className="bg-success text-white border-0 rounded-full px-3 py-1">
                   <Sparkles className="h-3 w-3 mr-1" />
                   Live
