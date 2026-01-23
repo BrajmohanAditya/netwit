@@ -31,7 +31,7 @@ export default function SocialPostingPage() {
                 <Facebook className="w-5 h-5 text-blue-600" />
                 Facebook
               </CardTitle>
-              <Badge variant="outline">Connected</Badge>
+              <Badge variant="green">Connected</Badge>
             </div>
           </CardHeader>
           <CardContent>
@@ -55,7 +55,7 @@ export default function SocialPostingPage() {
                 <Instagram className="w-5 h-5 text-pink-600" />
                 Instagram
               </CardTitle>
-              <Badge variant="outline">Not Connected</Badge>
+              <Badge variant="gray">Not Connected</Badge>
             </div>
           </CardHeader>
           <CardContent>
@@ -78,7 +78,7 @@ export default function SocialPostingPage() {
                 <Twitter className="w-5 h-5 text-blue-400" />
                 Twitter
               </CardTitle>
-              <Badge variant="outline">Not Connected</Badge>
+              <Badge variant="gray">Not Connected</Badge>
             </div>
           </CardHeader>
           <CardContent>
