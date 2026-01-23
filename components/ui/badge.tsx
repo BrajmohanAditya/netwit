@@ -1,37 +1,74 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+"use client";
 
-const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-  {
-    variants: {
-      variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
-        success:
-          "border-transparent bg-green-100 text-green-800 hover:bg-green-200",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-)
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+type BadgeVariant = "gray" | "blue" | "green" | "yellow" | "red";
+type BadgeRadius = "default" | "pill";
 
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
-  )
+interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: BadgeVariant;
+  radius?: BadgeRadius;
+  children: React.ReactNode;
 }
 
-export { Badge, badgeVariants }
+// Design System 3.6 Color Specs
+const variantStyles: Record<BadgeVariant, string> = {
+  gray: "bg-gray-100 text-gray-900", // #F3F4F6 bg, #374151 text
+  blue: "bg-blue-100 text-blue-900", // #DBEAFE bg, #1E40AF text
+  green: "bg-green-100 text-green-900", // #D1FAE5 bg, #065F46 text
+  yellow: "bg-yellow-100 text-yellow-900", // #FEF3C7 bg, #92400E text
+  red: "bg-red-100 text-red-900", // #FEE2E2 bg, #991B1B text
+};
+
+const radiusStyles: Record<BadgeRadius, string> = {
+  default: "rounded", // 4px
+  pill: "rounded-full", // 999px
+};
+
+/**
+ * Badge Component
+ *
+ * Used for: Status, tags, counts
+ * Height: 24px (h-6)
+ * Padding: 6px 10px (px-2.5 py-1.5)
+ * Font: 12px medium (text-xs font-medium)
+ * Radius: 4px (default) or 999px (pill)
+ *
+ * @example
+ * // Gray badge
+ * <Badge variant="gray">New</Badge>
+ *
+ * // Blue pill badge
+ * <Badge variant="blue" radius="pill">Active</Badge>
+ *
+ * // Green badge
+ * <Badge variant="green">Verified</Badge>
+ */
+function Badge({
+  variant = "gray",
+  radius = "default",
+  className,
+  children,
+  ...props
+}: BadgeProps) {
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center justify-center",
+        "h-6 px-2.5 py-1.5",
+        "text-xs font-medium",
+        "whitespace-nowrap",
+        variantStyles[variant],
+        radiusStyles[radius],
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+export { Badge };
+export type { BadgeVariant, BadgeRadius, BadgeProps };

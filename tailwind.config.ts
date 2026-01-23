@@ -80,6 +80,10 @@ const config: Config = {
         body: ["14px", { lineHeight: "1.5", fontWeight: "400" }],
         "small-text": ["12px", { lineHeight: "1.5", fontWeight: "400" }],
         "tiny-label": ["11px", { lineHeight: "1.25", fontWeight: "600" }],
+        "28px": ["28px", { lineHeight: "1.25", fontWeight: "700" }],
+      },
+      height: {
+        "120": "120px",
       },
       textColor: {
         heading: "var(--text-heading)",
@@ -117,6 +121,15 @@ const config: Config = {
       },
       transitionTimingFunction: {
         "cubic-ease": "cubic-bezier(0.4, 0, 0.2, 1)",
+      },
+      keyframes: {
+        "slide-in": {
+          "0%": { transform: "translateX(400px)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+      },
+      animation: {
+        "slide-in": "slide-in 0.3s ease-out",
       },
     },
   },
