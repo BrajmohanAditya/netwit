@@ -49,22 +49,24 @@ export function LeadSourceChart({ data = DEFAULT_DATA }: LeadSourceChartProps) {
 
   return (
     <Card className="shadow-elevation-2 rounded-lg border border-gray-200 bg-white">
-      <CardHeader className="p-6 border-b border-gray-200 flex flex-row items-center gap-2">
+      <CardHeader className="p-4 sm:p-6 border-b border-gray-200 flex flex-wrap items-center gap-2">
         <TrendingUp className="w-5 h-5 text-blue-500" />
         <CardTitle className="text-card-title font-semibold text-heading">
           Lead Source (Last 30 Days)
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6 h-80">
+      <CardContent className="p-4 sm:p-6 h-64 sm:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis
               dataKey="name"
               stroke="#6b7280"
-              angle={-45}
+              angle={-30}
               textAnchor="end"
-              height={80}
+              height={60}
+              interval={0}
+              tick={{ fontSize: 10 }}
             />
             <YAxis stroke="#6b7280" />
             <Tooltip

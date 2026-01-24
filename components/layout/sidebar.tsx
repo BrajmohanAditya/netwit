@@ -100,18 +100,25 @@ const navigationSections = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  isMobileOpen?: boolean;
+  onMobileOpenChange?: (open: boolean) => void;
+}
+
+export function Sidebar({ isMobileOpen, onMobileOpenChange }: SidebarProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [internalMobileOpen, setInternalMobileOpen] = useState(false);
+  const mobileOpen = isMobileOpen ?? internalMobileOpen;
+  const setMobileOpen = onMobileOpenChange ?? setInternalMobileOpen;
 
   return (
     <>
       {/* Mobile Overlay */}
-      {isMobileOpen && (
+      {mobileOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-30 md:hidden"
-          onClick={() => setIsMobileOpen(false)}
+          onClick={() => setMobileOpen(false)}
         />
       )}
 
@@ -121,7 +128,7 @@ export function Sidebar() {
           "flex h-screen flex-col bg-white border-r border-gray-200 shadow-elevation-2 transition-all duration-300 z-40",
           "fixed left-0 top-0",
           "w-sidebar md:w-sidebar",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           isCollapsed ? "md:w-sidebar-collapsed" : "md:w-sidebar",
         )}
       >
@@ -157,7 +164,7 @@ export function Sidebar() {
 
         {/* Mobile Close Button */}
         <button
-          onClick={() => setIsMobileOpen(false)}
+          onClick={() => setMobileOpen(false)}
           className="md:hidden absolute right-4 top-4 z-50 p-2 text-gray-500 hover:text-gray-700"
           aria-label="Close sidebar"
         >

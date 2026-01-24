@@ -127,7 +127,7 @@ export function TopVehiclesChart({ data = DEFAULT_DATA }: TopVehiclesProps) {
               }}
               formatter={(value) => `${value} units`}
             />
-            <Legend />
+            <Legend iconSize={10} wrapperStyle={{ fontSize: 10 }} />
             <Area
               type="monotone"
               dataKey="Honda Civic"
