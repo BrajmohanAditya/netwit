@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Grid3X3, List } from "lucide-react";
 import { VehicleStats } from "@/types/vehicle";
 
@@ -14,6 +15,8 @@ export function VehiclePageHeader({
   view,
   onViewChange,
 }: PageHeaderProps) {
+  const router = useRouter();
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -95,7 +98,10 @@ export function VehiclePageHeader({
 
       {/* Action Button */}
       <div className="flex gap-2">
-        <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium">
+        <button
+          onClick={() => router.push("/inventory/new")}
+          className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium"
+        >
           + Add Vehicle
         </button>
       </div>

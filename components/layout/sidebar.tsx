@@ -175,8 +175,12 @@ export function Sidebar() {
               )}
               {section.items.map((item) => {
                 const isActive =
-                  pathname === item.href ||
-                  pathname.startsWith(item.href + "/");
+                  item.href === "/inventory"
+                    ? pathname === "/inventory" ||
+                      (pathname.startsWith("/inventory/") &&
+                        !pathname.startsWith("/inventory/public"))
+                    : pathname === item.href ||
+                      pathname.startsWith(item.href + "/");
                 const Icon = item.icon;
                 return (
                   <div key={item.name} className="group relative">

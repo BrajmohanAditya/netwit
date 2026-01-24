@@ -34,7 +34,7 @@ export function DashboardClient({
   };
 
   const handleInventoryClick = () => {
-    router.push("/dashboard/inventory");
+    router.push("/inventory");
   };
 
   const handleDealsClick = () => {
@@ -54,7 +54,7 @@ export function DashboardClient({
   };
 
   const handleAddVehicle = () => {
-    router.push("/dashboard/inventory/new");
+    router.push("/inventory/new");
   };
 
   const handleScheduleTestDrive = () => {

@@ -26,7 +26,9 @@ export function UserMenu({ user }: UserMenuProps) {
   const handleLogout = async () => {
     setIsLoading(true);
     try {
-      await signOut();
+      // Clear any stored auth data
+      localStorage.clear();
+      router.push("/");
       toast.success("Signed out successfully!");
     } catch (error) {
       toast.error("Failed to sign out");
