@@ -1,97 +1,210 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, BarChart3, TrendingUp, DollarSign } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+
+const reportTypes = [
+  "Sales Summary",
+  "Inventory Aging",
+  "Financial Summary",
+  "Salesperson Performance",
+  "Customer Analytics",
+  "Custom Report",
+];
 
 export default function ReportsPage() {
+  const [reportType, setReportType] = useState("Sales Summary");
+  const [dateRange, setDateRange] = useState({
+    from: "",
+    to: "",
+    preset: "This Month",
+  });
+  const [filters, setFilters] = useState({
+    salesperson: "",
+    vehicleMake: "",
+    status: "",
+  });
+  const [showOutput, setShowOutput] = useState(false);
+
   return (
-    <div className="p-6">
-      <div className="space-y-2 mb-6">
-        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-          Reports
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          View detailed business reports and analytics
-        </p>
-      </div>
+    <div className="flex-1 space-y-6 px-6 py-6">
+      <Card>
+        <CardContent className="space-y-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold">Reports</h1>
+          </div>
 
-      <Tabs defaultValue="sales" className="mt-6">
-        <TabsList>
-          <TabsTrigger value="sales">
-            <DollarSign className="w-4 h-4 mr-2" />
-            Sales Reports
-          </TabsTrigger>
-          <TabsTrigger value="inventory">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Inventory Reports
-          </TabsTrigger>
-          <TabsTrigger value="leads">
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Lead Reports
-          </TabsTrigger>
-          <TabsTrigger value="financial">
-            <FileText className="w-4 h-4 mr-2" />
-            Financial Reports
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="sales" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sales Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-slate-500">
-                <p>Sales reports coming soon</p>
-                <p className="text-sm mt-2">Detailed sales analytics and performance metrics</p>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label>Select Report Type</Label>
+              <div className="grid gap-2 text-sm text-muted-foreground">
+                {reportTypes.map((type) => (
+                  <label key={type} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="report-type"
+                      value={type}
+                      checked={reportType === type}
+                      onChange={(event) => setReportType(event.target.value)}
+                    />
+                    {type}
+                  </label>
+                ))}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
 
-        <TabsContent value="inventory" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Inventory Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-slate-500">
-                <p>Inventory reports coming soon</p>
-                <p className="text-sm mt-2">Vehicle turnover, aging analysis, and stock performance</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label>Date Range</Label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Input
+                    type="date"
+                    value={dateRange.from}
+                    onChange={(event) =>
+                      setDateRange((prev) => ({
+                        ...prev,
+                        from: event.target.value,
+                      }))
+                    }
+                  />
+                  <Input
+                    type="date"
+                    value={dateRange.to}
+                    onChange={(event) =>
+                      setDateRange((prev) => ({
+                        ...prev,
+                        to: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <Select
+                  value={dateRange.preset}
+                  onChange={(event) =>
+                    setDateRange((prev) => ({
+                      ...prev,
+                      preset: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="This Month">This Month</option>
+                  <option value="Last Month">Last Month</option>
+                  <option value="This Quarter">This Quarter</option>
+                  <option value="This Year">This Year</option>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        <TabsContent value="leads" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Lead Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-slate-500">
-                <p>Lead reports coming soon</p>
-                <p className="text-sm mt-2">Conversion rates, source analysis, and pipeline metrics</p>
+              <div className="grid gap-2">
+                <Label>Filters</Label>
+                <div className="grid gap-2">
+                  <Select
+                    value={filters.salesperson}
+                    onChange={(event) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        salesperson: event.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Salesperson</option>
+                    <option value="Jamie Lee">Jamie Lee</option>
+                    <option value="Alex Martinez">Alex Martinez</option>
+                    <option value="Sam Patel">Sam Patel</option>
+                  </Select>
+                  <Select
+                    value={filters.vehicleMake}
+                    onChange={(event) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        vehicleMake: event.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Vehicle Make</option>
+                    <option value="Audi">Audi</option>
+                    <option value="BMW">BMW</option>
+                    <option value="Lexus">Lexus</option>
+                  </Select>
+                  <Select
+                    value={filters.status}
+                    onChange={(event) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        status: event.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Status</option>
+                    <option value="Open">Open</option>
+                    <option value="Closed">Closed</option>
+                    <option value="Pending">Pending</option>
+                  </Select>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
 
-        <TabsContent value="financial" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Financial Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-slate-500">
-                <p>Financial reports coming soon</p>
-                <p className="text-sm mt-2">P&L statements, cash flow, and profitability analysis</p>
+            <div>
+              <Button variant="primary" onClick={() => setShowOutput(true)}>
+                Generate Report
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {showOutput && (
+        <Card>
+          <CardContent className="space-y-4">
+            <div className="text-sm font-semibold text-muted-foreground">
+              Report Output
+            </div>
+
+            <div className="space-y-3 rounded-lg border bg-background p-4 text-sm">
+              <div className="space-y-1">
+                <div className="font-semibold">{reportType}</div>
+                <div className="text-muted-foreground">
+                  Jan 1 - Jan 31, 2026
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+
+              <div className="grid gap-2 text-muted-foreground sm:grid-cols-2">
+                <div>Total Deals: 12</div>
+                <div>Total Revenue: $450K</div>
+                <div>Avg Deal: $37.5K</div>
+                <div>Commission: $18K</div>
+              </div>
+
+              <div className="space-y-1 text-muted-foreground">
+                <div>Top Salesperson: Agam Chawla - 5 deals</div>
+                <div>Top Vehicle: Ford Mustang - 3 sold</div>
+              </div>
+
+              <div className="space-y-1 text-muted-foreground">
+                <div className="font-semibold text-slate-600">Charts:</div>
+                <div>Revenue by Week</div>
+                <div>Deals by Status</div>
+                <div>Top 5 Vehicles</div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" size="sm">
+                Export PDF
+              </Button>
+              <Button variant="secondary" size="sm">
+                Export Excel
+              </Button>
+              <Button variant="secondary" size="sm">
+                Print
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -65,7 +65,11 @@ const navigationSections = [
     title: "CUSTOMERS",
     items: [
       { name: "Customer Directory", href: "/customers", icon: Users },
-      { name: "Quotations", href: "/quotations", icon: FileText },
+      {
+        name: "Quotations",
+        href: "/quotations",
+        icon: FileText,
+      },
     ],
   },
   {
@@ -189,36 +193,55 @@ export function Sidebar({ isMobileOpen, onMobileOpenChange }: SidebarProps) {
                     : pathname === item.href ||
                       pathname.startsWith(item.href + "/");
                 const Icon = item.icon;
+                const isDisabled = "disabled" in item && item.disabled;
                 return (
                   <div key={item.name} className="group relative">
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors duration-150 relative",
-                        isCollapsed ? "justify-center" : "justify-between",
-                        isActive
-                          ? "bg-primary-light text-primary border-l-4 border-primary"
-                          : "bg-transparent text-body hover:bg-gray-100 text-gray-700",
-                      )}
-                      title={isCollapsed ? item.name : undefined}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Icon
-                          className={cn(
-                            "h-5 w-5 transition-colors duration-150",
-                            isActive ? "text-primary" : "text-gray-500",
-                          )}
-                        />
-                        {!isCollapsed && (
-                          <span className="truncate">{item.name}</span>
+                    {isDisabled ? (
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors duration-150 relative",
+                          isCollapsed ? "justify-center" : "justify-between",
+                          "text-gray-400 cursor-not-allowed",
                         )}
+                        title={isCollapsed ? item.name : undefined}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="h-5 w-5 text-gray-300" />
+                          {!isCollapsed && (
+                            <span className="truncate">{item.name}</span>
+                          )}
+                        </div>
                       </div>
-                      {!isCollapsed && item.badge && (
-                        <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white">
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors duration-150 relative",
+                          isCollapsed ? "justify-center" : "justify-between",
+                          isActive
+                            ? "bg-primary-light text-primary border-l-4 border-primary"
+                            : "bg-transparent text-body hover:bg-gray-100 text-gray-700",
+                        )}
+                        title={isCollapsed ? item.name : undefined}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon
+                            className={cn(
+                              "h-5 w-5 transition-colors duration-150",
+                              isActive ? "text-primary" : "text-gray-500",
+                            )}
+                          />
+                          {!isCollapsed && (
+                            <span className="truncate">{item.name}</span>
+                          )}
+                        </div>
+                        {!isCollapsed && item.badge && (
+                          <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white">
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    )}
 
                     {/* Tooltip for collapsed state */}
                     {isCollapsed && (
