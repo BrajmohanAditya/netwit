@@ -144,7 +144,7 @@ export default function SocialPostingPage() {
           onClick={() => setIsCreateEventOpen(true)}
         >
           Create Event
-        </Button>>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

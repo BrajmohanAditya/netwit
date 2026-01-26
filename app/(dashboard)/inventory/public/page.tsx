@@ -22,52 +22,55 @@ export default function PurchaseFromPublicPage() {
   });
   const [selectedPurchases, setSelectedPurchases] = useState<string[]>([]);
 
-  const purchaseHistory = [
-    {
-      id: "PH-001",
-      date: "2026-01-20",
-      vehicle: "2020 Honda Civic LX",
-      vin: "2HGFC2F69LH000101",
-      price: 12850,
-      seller: "Jordan Miles",
-      sellerType: "Individual",
-      acceptedBy: "Agam",
-      status: "Completed",
-    },
-    {
-      id: "PH-002",
-      date: "2026-01-18",
-      vehicle: "2019 Ford Escape SE",
-      vin: "1FMCU0GD7KUA11321",
-      price: 15400,
-      seller: "Summit Auto Group",
-      sellerType: "Company",
-      acceptedBy: "Ava Carter",
-      status: "Pending Docs",
-    },
-    {
-      id: "PH-003",
-      date: "2026-01-12",
-      vehicle: "2021 Toyota Corolla LE",
-      vin: "5YFB4MDE6MP123456",
-      price: 14350,
-      seller: "Avery Chen",
-      sellerType: "Individual",
-      acceptedBy: "Noah Reed",
-      status: "Inspection",
-    },
-    {
-      id: "PH-004",
-      date: "2026-01-08",
-      vehicle: "2018 Jeep Wrangler Sport",
-      vin: "1C4GJXAG2JW102938",
-      price: 22500,
-      seller: "North Ridge Motors",
-      sellerType: "Company",
-      acceptedBy: "Agam",
-      status: "Completed",
-    },
-  ];
+  const purchaseHistory = useMemo(
+    () => [
+      {
+        id: "PH-001",
+        date: "2026-01-20",
+        vehicle: "2020 Honda Civic LX",
+        vin: "2HGFC2F69LH000101",
+        price: 12850,
+        seller: "Jordan Miles",
+        sellerType: "Individual",
+        acceptedBy: "Agam",
+        status: "Completed",
+      },
+      {
+        id: "PH-002",
+        date: "2026-01-18",
+        vehicle: "2019 Ford Escape SE",
+        vin: "1FMCU0GD7KUA11321",
+        price: 15400,
+        seller: "Summit Auto Group",
+        sellerType: "Company",
+        acceptedBy: "Ava Carter",
+        status: "Pending Docs",
+      },
+      {
+        id: "PH-003",
+        date: "2026-01-12",
+        vehicle: "2021 Toyota Corolla LE",
+        vin: "5YFB4MDE6MP123456",
+        price: 14350,
+        seller: "Avery Chen",
+        sellerType: "Individual",
+        acceptedBy: "Noah Reed",
+        status: "Inspection",
+      },
+      {
+        id: "PH-004",
+        date: "2026-01-08",
+        vehicle: "2018 Jeep Wrangler Sport",
+        vin: "1C4GJXAG2JW102938",
+        price: 22500,
+        seller: "North Ridge Motors",
+        sellerType: "Company",
+        acceptedBy: "Agam",
+        status: "Completed",
+      },
+    ],
+    [],
+  );
 
   const filteredHistory = useMemo(() => {
     return purchaseHistory.filter((item) => {
