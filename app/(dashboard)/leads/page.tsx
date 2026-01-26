@@ -12,7 +12,15 @@ import { LeadDetailModal } from "@/components/leads/lead-detail-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -146,9 +154,10 @@ export default function LeadsPage() {
   const [editedNames, setEditedNames] = useState<Record<string, string>>({});
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+  const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
 
   const handleNewLead = () => {
-    console.log("Create new lead");
+    setIsNewLeadOpen(true);
   };
 
   const openLeadDetails = (leadId: string) => {
@@ -175,6 +184,58 @@ export default function LeadsPage() {
           icon: <Plus className="h-4 w-4" />,
         }}
       />
+
+      <Dialog open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen}>
+        <DialogContent className="max-w-[640px] w-[95vw]">
+          <DialogHeader>
+            <DialogTitle>New Lead</DialogTitle>
+            <DialogDescription>
+              Capture the customer details and lead information to get started.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              <Input placeholder="Full name" />
+              <Input placeholder="Email" type="email" />
+              <Input placeholder="Phone" type="tel" />
+              <Input placeholder="Company (optional)" />
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <Select defaultValue="Website">
+                <option value="Website">Website</option>
+                <option value="Referral">Referral</option>
+                <option value="Walk-in">Walk-in</option>
+                <option value="Phone">Phone</option>
+                <option value="Marketplace">Marketplace</option>
+              </Select>
+              <Select defaultValue="Not Started">
+                {kanbanStatuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </Select>
+              <Select defaultValue="Unassigned">
+                <option value="Unassigned">Unassigned</option>
+                <option value="Agam Chawla">Agam Chawla</option>
+                <option value="Kyle Pierce">Kyle Pierce</option>
+                <option value="Amy Richards">Amy Richards</option>
+              </Select>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <Input placeholder="Vehicle interest" />
+              <Input placeholder="Lead source details" />
+            </div>
+            <Input placeholder="Notes" />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setIsNewLeadOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => setIsNewLeadOpen(false)}>Create Lead</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="px-6 space-y-6">
         {/* Stats Row */}

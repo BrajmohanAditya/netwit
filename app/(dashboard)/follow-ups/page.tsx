@@ -10,6 +10,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -108,6 +115,7 @@ export default function FollowUpsPage() {
     assigned: "",
     search: "",
   });
+  const [isNewFollowUpOpen, setIsNewFollowUpOpen] = useState(false);
 
   return (
     <div className="flex-1 space-y-6 px-6 py-6">
@@ -120,7 +128,11 @@ export default function FollowUpsPage() {
                 Track, schedule, and complete customer follow-ups.
               </div>
             </div>
-            <Button variant="primary" size="md">
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => setIsNewFollowUpOpen(true)}
+            >
               <Plus className="mr-2 h-4 w-4" />
               New Follow-up
             </Button>
@@ -206,6 +218,59 @@ export default function FollowUpsPage() {
           </Card>
         ))}
       </div>
+
+      <Dialog open={isNewFollowUpOpen} onOpenChange={setIsNewFollowUpOpen}>
+        <DialogContent className="max-w-[640px] w-[95vw]">
+          <DialogHeader>
+            <DialogTitle>New Follow-up</DialogTitle>
+            <DialogDescription>
+              Schedule a follow-up and assign it to a team member.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              <Input placeholder="Customer name" />
+              <Input placeholder="Lead / Vehicle" />
+              <Input type="date" placeholder="Due date" />
+              <Input type="time" placeholder="Time" />
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <Select defaultValue="Call">
+                {(["Call", "Email", "SMS", "Visit"] as FollowUpChannel[]).map(
+                  (channel) => (
+                    <option key={channel} value={channel}>
+                      {channel}
+                    </option>
+                  ),
+                )}
+              </Select>
+              <Select defaultValue="Medium">
+                {(["High", "Medium", "Low"] as const).map((priority) => (
+                  <option key={priority} value={priority}>
+                    {priority}
+                  </option>
+                ))}
+              </Select>
+              <Select defaultValue="Jamie Lee">
+                {["Jamie Lee", "Alex Martinez", "Sam Patel"].map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <Input placeholder="Notes" />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setIsNewFollowUpOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => setIsNewFollowUpOpen(false)}>
+              Create Follow-up
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardContent className="p-0">

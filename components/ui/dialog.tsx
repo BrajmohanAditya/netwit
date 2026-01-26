@@ -1,44 +1,46 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
-import { X } from "lucide-react"
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
 
 interface DialogProps {
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
-  children: React.ReactNode
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children: React.ReactNode;
 }
 
 interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 const DialogContext = React.createContext<{
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }>({
   open: false,
   onOpenChange: () => {},
-})
+});
 
 export function Dialog({ open = false, onOpenChange, children }: DialogProps) {
-  const [internalOpen, setInternalOpen] = React.useState(open)
+  const [internalOpen, setInternalOpen] = React.useState(open);
 
   React.useEffect(() => {
-    setInternalOpen(open)
-  }, [open])
+    setInternalOpen(open);
+  }, [open]);
 
   const handleOpenChange = React.useCallback(
     (newOpen: boolean) => {
-      setInternalOpen(newOpen)
-      onOpenChange?.(newOpen)
+      setInternalOpen(newOpen);
+      onOpenChange?.(newOpen);
     },
-    [onOpenChange]
-  )
+    [onOpenChange],
+  );
 
-  if (!internalOpen) return null
+  if (!internalOpen) return null;
 
   return (
-    <DialogContext.Provider value={{ open: internalOpen, onOpenChange: handleOpenChange }}>
+    <DialogContext.Provider
+      value={{ open: internalOpen, onOpenChange: handleOpenChange }}
+    >
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         <div
           className="fixed inset-0 bg-black/50"
@@ -47,7 +49,7 @@ export function Dialog({ open = false, onOpenChange, children }: DialogProps) {
         {children}
       </div>
     </DialogContext.Provider>
-  )
+  );
 }
 
 export function DialogContent({
@@ -55,13 +57,13 @@ export function DialogContent({
   children,
   ...props
 }: DialogContentProps) {
-  const { onOpenChange } = React.useContext(DialogContext)
+  const { onOpenChange } = React.useContext(DialogContext);
 
   return (
     <div
       className={cn(
         "relative z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg sm:rounded-lg",
-        className
+        className,
       )}
       {...props}
     >
@@ -74,10 +76,10 @@ export function DialogContent({
       </button>
       {children}
     </div>
-  )
+  );
 }
 
-DialogContent.displayName = "DialogContent"
+DialogContent.displayName = "DialogContent";
 
 export function DialogHeader({
   className,
@@ -85,12 +87,15 @@ export function DialogHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)}
+      className={cn(
+        "flex flex-col space-y-1.5 text-center sm:text-left",
+        className,
+      )}
       {...props}
     />
-  )
+  );
 }
-DialogHeader.displayName = "DialogHeader"
+DialogHeader.displayName = "DialogHeader";
 
 export function DialogTitle({
   className,
@@ -98,12 +103,15 @@ export function DialogTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
-      className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+      className={cn(
+        "text-lg font-semibold leading-none tracking-tight",
+        className,
+      )}
       {...props}
     />
-  )
+  );
 }
-DialogTitle.displayName = "DialogTitle"
+DialogTitle.displayName = "DialogTitle";
 
 export function DialogDescription({
   className,
@@ -111,6 +119,22 @@ export function DialogDescription({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p className={cn("text-sm text-muted-foreground", className)} {...props} />
-  )
+  );
 }
-DialogDescription.displayName = "DialogDescription"
+DialogDescription.displayName = "DialogDescription";
+
+export function DialogFooter({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+DialogFooter.displayName = "DialogFooter";

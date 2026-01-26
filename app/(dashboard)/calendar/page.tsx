@@ -574,10 +574,10 @@ export default function CalendarPage() {
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Checkbox
                   checked={createForm.remindSms}
-                  onCheckedChange={(checked) =>
+                  onChange={(e) =>
                     setCreateForm((prev) => ({
                       ...prev,
-                      remindSms: Boolean(checked),
+                      remindSms: e.target.checked,
                     }))
                   }
                 />

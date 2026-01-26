@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import {
-  Modal,
-  ModalBody,
-  ModalFooter,
-  ModalHeader,
-  useModal,
-} from "@/components/ui/modal";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const tasks = [
   {
@@ -70,7 +72,7 @@ export default function TasksPage() {
     status: "",
     dueDate: "",
   });
-  const { isOpen, open, close } = useModal(false);
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
 
   const stats = useMemo(() => {
     return {
@@ -93,10 +95,10 @@ export default function TasksPage() {
         </div>
         <Button
           className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={open}
+          onClick={() => setIsCreateTaskOpen(true)}
         >
           + Create
-        </Button>
+        </Button>>
       </div>
 
       {/* Views */}
@@ -283,72 +285,64 @@ export default function TasksPage() {
       </Card>
 
       {/* Create Task Modal */}
-      <Modal isOpen={isOpen} onClose={close}>
-        <ModalHeader title="Create Task" />
-        <ModalBody>
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="text-sm font-medium">Title</label>
-              <Input placeholder="Task title" />
+      <Dialog open={isCreateTaskOpen} onOpenChange={setIsCreateTaskOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Create Task</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="title" className="text-sm font-semibold text-gray-700">Title</Label>
+              <Input id="title" placeholder="Task title" />
             </div>
-            <div>
-              <label className="text-sm font-medium">Description</label>
+            
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-sm font-semibold text-gray-700">Description</Label>
               <textarea
-                className="mt-1 w-full rounded-lg border border-gray-200 p-3 text-sm"
+                id="description"
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 rows={3}
                 placeholder="Task description"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium">Assign To</label>
-              <Select>
+
+            <div className="space-y-2">
+              <Label htmlFor="assignTo" className="text-sm font-semibold text-gray-700">Assign To</Label>
+              <Select id="assignTo">
                 <option value="">Select user</option>
                 <option value="Ava Carter">Ava Carter</option>
                 <option value="Noah Reed">Noah Reed</option>
               </Select>
             </div>
-            <div>
-              <label className="text-sm font-medium">Priority</label>
-              <Select>
+
+            <div className="space-y-2">
+              <Label htmlFor="priority" className="text-sm font-semibold text-gray-700">Priority</Label>
+              <Select id="priority">
                 <option value="Medium">Medium</option>
                 <option value="Urgent">Urgent</option>
                 <option value="High">High</option>
                 <option value="Low">Low</option>
               </Select>
             </div>
-            <div>
-              <label className="text-sm font-medium">Due Date</label>
-              <Input type="date" />
-            </div>
+
             <div className="space-y-2">
-              <label className="text-sm font-medium">Related To</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                <label className="flex items-center gap-2">
-                  <input type="radio" name="relatedTo" /> Customer
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="radio" name="relatedTo" /> Vehicle
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="radio" name="relatedTo" /> Deal
-                </label>
-              </div>
-              <Input placeholder="Search..." />
+              <Label htmlFor="dueDate" className="text-sm font-semibold text-gray-700">Due Date</Label>
+              <Input id="dueDate" type="date" placeholder="mm/dd/yyyy" />
             </div>
           </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="outline" onClick={close}>
-            Cancel
-          </Button>
-          <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={close}
-          >
-            Create
-          </Button>
-        </ModalFooter>
-      </Modal>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateTaskOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => setIsCreateTaskOpen(false)}
+            >
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
