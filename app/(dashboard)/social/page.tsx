@@ -296,7 +296,7 @@ export default function SocialPostingPage() {
             onClick={() => setIsPostToFacebookOpen(true)}
           >
             Post to Facebook
-          </Button>>
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
@@ -440,11 +440,16 @@ export default function SocialPostingPage() {
           </DialogHeader>
           <div className="grid gap-6 py-4">
             <div className="grid gap-2">
-              <Label className="text-xs font-semibold uppercase tracking-wide text-muted">Type</Label>
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Type
+              </Label>
               <div className="flex flex-wrap gap-4">
                 {["Test Drive", "Appointment", "Follow-up", "Delivery"].map(
                   (type) => (
-                    <label key={type} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                    <label
+                      key={type}
+                      className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded"
+                    >
                       <input
                         type="radio"
                         name="eventType"
@@ -453,55 +458,113 @@ export default function SocialPostingPage() {
                       />
                       {type}
                     </label>
-                  )
+                  ),
                 )}
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="col-span-1 md:col-span-2">
-                <Label htmlFor="title" className="text-xs font-semibold uppercase tracking-wide text-muted">Title</Label>
+                <Label
+                  htmlFor="title"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted"
+                >
+                  Title
+                </Label>
                 <Input id="title" placeholder="Event title" className="mt-1" />
               </div>
 
               <div>
-                <Label htmlFor="customer" className="text-xs font-semibold uppercase tracking-wide text-muted">Customer</Label>
-                <Input id="customer" placeholder="Search customer" className="mt-1" />
+                <Label
+                  htmlFor="customer"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted"
+                >
+                  Customer
+                </Label>
+                <Input
+                  id="customer"
+                  placeholder="Search customer"
+                  className="mt-1"
+                />
               </div>
 
               <div>
-                <Label htmlFor="vehicle" className="text-xs font-semibold uppercase tracking-wide text-muted">Vehicle</Label>
-                <Input id="vehicle" placeholder="Search vehicle" className="mt-1" />
+                <Label
+                  htmlFor="vehicle"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted"
+                >
+                  Vehicle
+                </Label>
+                <Input
+                  id="vehicle"
+                  placeholder="Search vehicle"
+                  className="mt-1"
+                />
               </div>
 
               <div>
-                <Label htmlFor="date" className="text-xs font-semibold uppercase tracking-wide text-muted">Date</Label>
+                <Label
+                  htmlFor="date"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted"
+                >
+                  Date
+                </Label>
                 <Input id="date" type="date" className="mt-1" />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                   <Label htmlFor="start" className="text-xs font-semibold uppercase tracking-wide text-muted">Start</Label>
-                   <Input id="start" type="time" className="mt-1" />
+                  <Label
+                    htmlFor="start"
+                    className="text-xs font-semibold uppercase tracking-wide text-muted"
+                  >
+                    Start
+                  </Label>
+                  <Input id="start" type="time" className="mt-1" />
                 </div>
                 <div>
-                   <Label htmlFor="end" className="text-xs font-semibold uppercase tracking-wide text-muted">End</Label>
-                   <Input id="end" type="time" className="mt-1" />
+                  <Label
+                    htmlFor="end"
+                    className="text-xs font-semibold uppercase tracking-wide text-muted"
+                  >
+                    End
+                  </Label>
+                  <Input id="end" type="time" className="mt-1" />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="duration" className="text-xs font-semibold uppercase tracking-wide text-muted">Duration</Label>
-                <Input id="duration" value="1 hour" disabled className="mt-1 bg-gray-50" />
+                <Label
+                  htmlFor="duration"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted"
+                >
+                  Duration
+                </Label>
+                <Input
+                  id="duration"
+                  value="1 hour"
+                  disabled
+                  className="mt-1 bg-gray-50"
+                />
               </div>
 
               <div>
-                <Label htmlFor="location" className="text-xs font-semibold uppercase tracking-wide text-muted">Location</Label>
+                <Label
+                  htmlFor="location"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted"
+                >
+                  Location
+                </Label>
                 <Input id="location" placeholder="Location" className="mt-1" />
               </div>
 
               <div>
-                <Label htmlFor="assigned" className="text-xs font-semibold uppercase tracking-wide text-muted">Assigned To</Label>
+                <Label
+                  htmlFor="assigned"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted"
+                >
+                  Assigned To
+                </Label>
                 <Select className="mt-1">
                   <option value="">Select staff</option>
                   <option value="Agam">Agam</option>
@@ -511,7 +574,12 @@ export default function SocialPostingPage() {
               </div>
 
               <div className="col-span-1 md:col-span-2">
-                <Label htmlFor="description" className="text-xs font-semibold uppercase tracking-wide text-muted">Description</Label>
+                <Label
+                  htmlFor="description"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted"
+                >
+                  Description
+                </Label>
                 <textarea
                   id="description"
                   className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -521,20 +589,25 @@ export default function SocialPostingPage() {
               </div>
 
               <div className="col-span-1 md:col-span-2 space-y-2">
-                 <Label className="text-xs font-semibold uppercase tracking-wide text-muted">Reminders</Label>
-                 <div className="flex gap-6">
-                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                      <Checkbox defaultChecked /> Email 24h before
-                    </label>
-                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                      <Checkbox defaultChecked /> SMS 2h before
-                    </label>
-                 </div>
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Reminders
+                </Label>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <Checkbox defaultChecked /> Email 24h before
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <Checkbox defaultChecked /> SMS 2h before
+                  </label>
+                </div>
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateEventOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateEventOpen(false)}
+            >
               Cancel
             </Button>
             <Button
@@ -615,74 +688,109 @@ export default function SocialPostingPage() {
         </ModalFooter>
       </Modal>
 
-      <Dialog open={isPostToFacebookOpen} onOpenChange={setIsPostToFacebookOpen}>
+      <Dialog
+        open={isPostToFacebookOpen}
+        onOpenChange={setIsPostToFacebookOpen}
+      >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Post to Facebook</DialogTitle>
           </DialogHeader>
           <div className="grid gap-6 py-4">
-             {/* Vehicle Section */}
-             <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wide text-muted">Vehicle</Label>
-                <div className="text-base font-semibold text-gray-900">2021 Ford Mustang</div>
-                <div className="mt-2 rounded-lg border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-muted">
-                  [Preview]
-                </div>
-             </div>
+            {/* Vehicle Section */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Vehicle
+              </Label>
+              <div className="text-base font-semibold text-gray-900">
+                2021 Ford Mustang
+              </div>
+              <div className="mt-2 rounded-lg border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-muted">
+                [Preview]
+              </div>
+            </div>
 
-             {/* Caption Section */}
-             <div className="space-y-2">
-                <Label htmlFor="caption" className="text-xs font-semibold uppercase tracking-wide text-muted">Caption</Label>
-                <textarea
-                  id="caption"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  rows={4}
-                  placeholder="Edit text..."
-                />
-             </div>
+            {/* Caption Section */}
+            <div className="space-y-2">
+              <Label
+                htmlFor="caption"
+                className="text-xs font-semibold uppercase tracking-wide text-muted"
+              >
+                Caption
+              </Label>
+              <textarea
+                id="caption"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                rows={4}
+                placeholder="Edit text..."
+              />
+            </div>
 
-             {/* Images Section */}
-             <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wide text-muted">Images</Label>
-                <div className="flex items-center justify-between text-sm text-gray-700">
-                  <span>5 selected</span>
-                  <Button variant="ghost" className="text-blue-600 hover:text-blue-700 hover:bg-transparent p-0 h-auto text-xs font-semibold">
-                    Select Different
-                  </Button>
-                </div>
-             </div>
-             
-             {/* Post To Section */}
-             <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wide text-muted">Post To</Label>
-                <div className="flex flex-col gap-2">
+            {/* Images Section */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Images
+              </Label>
+              <div className="flex items-center justify-between text-sm text-gray-700">
+                <span>5 selected</span>
+                <Button
+                  variant="ghost"
+                  className="text-blue-600 hover:text-blue-700 hover:bg-transparent p-0 h-auto text-xs font-semibold"
+                >
+                  Select Different
+                </Button>
+              </div>
+            </div>
+
+            {/* Post To Section */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Post To
+              </Label>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox defaultChecked /> Facebook Page
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox defaultChecked /> Facebook Marketplace
+                </label>
+              </div>
+            </div>
+
+            {/* Schedule Section */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Schedule
+              </Label>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="schedule"
+                    defaultChecked
+                    className="accent-blue-600 h-4 w-4"
+                  />{" "}
+                  Post Now
+                </label>
+                <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <Checkbox defaultChecked /> Facebook Page
+                    <input
+                      type="radio"
+                      name="schedule"
+                      className="accent-blue-600 h-4 w-4"
+                    />{" "}
+                    Schedule
                   </label>
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <Checkbox defaultChecked /> Facebook Marketplace
-                  </label>
+                  <Input type="datetime-local" className="w-auto" />
                 </div>
-             </div>
-
-             {/* Schedule Section */}
-             <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wide text-muted">Schedule</Label>
-                 <div className="flex flex-col gap-2">
-                     <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <input type="radio" name="schedule" defaultChecked className="accent-blue-600 h-4 w-4"/> Post Now
-                     </label>
-                     <div className="flex items-center gap-4">
-                        <label className="flex items-center gap-2 text-sm cursor-pointer">
-                           <input type="radio" name="schedule" className="accent-blue-600 h-4 w-4"/> Schedule
-                        </label>
-                        <Input type="datetime-local" className="w-auto" />
-                     </div>
-                 </div>
-             </div>
+              </div>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsPostToFacebookOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsPostToFacebookOpen(false)}
+            >
               Cancel
             </Button>
             <Button
