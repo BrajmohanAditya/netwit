@@ -111,10 +111,13 @@ export default function CampaignsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   return (
-    <div className="flex-1 space-y-6 px-6 py-6">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-6 px-4 py-6 sm:px-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Marketing Campaigns</h1>
-        <Button onClick={() => setIsCreateOpen(true)}>
+        <Button
+          onClick={() => setIsCreateOpen(true)}
+          className="w-full sm:w-auto"
+        >
           <Plus className="mr-2 h-4 w-4" />
           Create Campaign
         </Button>
@@ -255,7 +258,7 @@ export default function CampaignsPage() {
       </div>
 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Campaign</DialogTitle>
             <DialogDescription>

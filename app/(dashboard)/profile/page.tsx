@@ -33,7 +33,7 @@ export default function ProfilePage() {
   });
 
   return (
-    <div className="flex-1 space-y-6 px-6 py-6">
+    <div className="flex-1 space-y-6 px-4 py-6 sm:px-6">
       <Card>
         <CardContent className="space-y-6">
           <div className="space-y-1">
@@ -379,8 +379,10 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <Button variant="primary">Save Changes</Button>
+          <div className="flex flex-col sm:flex-row justify-end gap-2">
+            <Button variant="primary" className="w-full sm:w-auto">
+              Save Changes
+            </Button>
           </div>
         </CardContent>
       </Card>

@@ -432,7 +432,7 @@ export default function TestDrivesPage() {
       </Card>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -532,53 +532,55 @@ export default function TestDrivesPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-[70px_repeat(7,minmax(120px,1fr))] border rounded-lg overflow-hidden">
-            <div className="bg-slate-50 p-2 text-xs text-slate-400" />
-            {weekDays.map((day) => (
-              <div
-                key={day}
-                className="bg-slate-50 p-2 text-center text-xs font-semibold text-slate-500 border-l"
-              >
-                {day}
-              </div>
-            ))}
-
-            {calendarSlots.map((slot) => (
-              <div key={slot} className="contents">
-                <div className="p-2 text-xs text-slate-400 border-t">
-                  {slot}
+          <div className="overflow-x-auto">
+            <div className="grid grid-cols-[70px_repeat(7,minmax(120px,1fr))] border rounded-lg overflow-hidden min-w-[900px]">
+              <div className="bg-slate-50 p-2 text-xs text-slate-400" />
+              {weekDays.map((day) => (
+                <div
+                  key={day}
+                  className="bg-slate-50 p-2 text-center text-xs font-semibold text-slate-500 border-l"
+                >
+                  {day}
                 </div>
-                {weekDays.map((_, dayIndex) => {
-                  const slotEvents = calendarEvents.filter(
-                    (event) =>
-                      event.dayIndex === dayIndex && event.time === slot,
-                  );
+              ))}
 
-                  return (
-                    <div
-                      key={`${slot}-${dayIndex}`}
-                      className="border-l border-t p-1 min-h-[52px]"
-                    >
-                      {slotEvents.map((event) => (
-                        <div
-                          key={event.id}
-                          className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-600 shadow-sm"
-                        >
-                          <div className="font-semibold text-slate-700">
-                            {event.time}-{event.endTime}
+              {calendarSlots.map((slot) => (
+                <div key={slot} className="contents">
+                  <div className="p-2 text-xs text-slate-400 border-t">
+                    {slot}
+                  </div>
+                  {weekDays.map((_, dayIndex) => {
+                    const slotEvents = calendarEvents.filter(
+                      (event) =>
+                        event.dayIndex === dayIndex && event.time === slot,
+                    );
+
+                    return (
+                      <div
+                        key={`${slot}-${dayIndex}`}
+                        className="border-l border-t p-1 min-h-[52px]"
+                      >
+                        {slotEvents.map((event) => (
+                          <div
+                            key={event.id}
+                            className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-600 shadow-sm"
+                          >
+                            <div className="font-semibold text-slate-700">
+                              {event.time}-{event.endTime}
+                            </div>
+                            <div>{event.customer}</div>
+                            <div>{event.vehicle}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {event.staff}
+                            </div>
                           </div>
-                          <div>{event.customer}</div>
-                          <div>{event.vehicle}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {event.staff}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="text-xs text-muted-foreground">
@@ -739,7 +741,7 @@ export default function TestDrivesPage() {
       </Card>
 
       <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Schedule Test Drive</DialogTitle>
             <DialogDescription>Step {currentStep} of 4</DialogDescription>

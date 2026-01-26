@@ -69,7 +69,7 @@ export function Notifications() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-elevation-4 border border-gray-200 z-50">
+        <div className="absolute right-0 mt-2 w-[85vw] sm:w-96 bg-white rounded-lg shadow-elevation-4 border border-gray-200 z-50">
           <div className="p-4 border-b border-gray-200">
             <h3 className="text-card-title font-semibold text-heading">
               Notifications

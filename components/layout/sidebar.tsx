@@ -107,12 +107,23 @@ const navigationSections = [
 interface SidebarProps {
   isMobileOpen?: boolean;
   onMobileOpenChange?: (open: boolean) => void;
+  isCollapsed?: boolean;
+  onCollapseChange?: (collapsed: boolean) => void;
 }
 
-export function Sidebar({ isMobileOpen, onMobileOpenChange }: SidebarProps) {
+export function Sidebar({
+  isMobileOpen,
+  onMobileOpenChange,
+  isCollapsed: controlledCollapsed,
+  onCollapseChange,
+}: SidebarProps) {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [internalMobileOpen, setInternalMobileOpen] = useState(false);
+
+  const isCollapsed = controlledCollapsed ?? internalCollapsed;
+  const setIsCollapsed = onCollapseChange ?? setInternalCollapsed;
+
   const mobileOpen = isMobileOpen ?? internalMobileOpen;
   const setMobileOpen = onMobileOpenChange ?? setInternalMobileOpen;
 

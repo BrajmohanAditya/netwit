@@ -109,8 +109,8 @@ function Toast({
   return (
     <div
       className={cn(
-        "fixed right-4 top-4",
-        "w-[360px]",
+        "fixed right-4 top-4 z-50",
+        "w-[calc(100vw-2rem)] sm:w-[360px]",
         "flex items-start gap-3",
         "p-4 rounded-lg shadow-lg",
         "animate-slide-in",

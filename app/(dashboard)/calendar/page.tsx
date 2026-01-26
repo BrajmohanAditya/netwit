@@ -185,11 +185,11 @@ export default function CalendarPage() {
         }}
       />
 
-      <div className="px-6 space-y-6">
+      <div className="px-4 sm:px-6 space-y-6">
         <div className="rounded-lg border bg-card p-4 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="text-sm text-muted-foreground">
-              Views:
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="text-sm text-muted-foreground flex items-center justify-between w-full sm:w-auto">
+              <span>Views:</span>
               <div className="inline-flex ml-2 rounded-md border bg-background p-1">
                 {(["month", "week", "day"] as const).map((item) => (
                   <Button
@@ -197,14 +197,14 @@ export default function CalendarPage() {
                     variant={view === item ? "primary" : "ghost"}
                     size="sm"
                     onClick={() => setView(item)}
-                    className="capitalize"
+                    className="capitalize text-xs sm:text-sm px-2 sm:px-3"
                   >
                     {item}
                   </Button>
                 ))}
               </div>
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground w-full sm:w-auto text-right sm:text-left">
               Current:{" "}
               <span className="font-semibold text-foreground">
                 {currentLabel}
@@ -213,22 +213,24 @@ export default function CalendarPage() {
           </div>
 
           {view === "month" && (
-            <div className="rounded-lg border bg-background">
-              <Calendar
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                onDayClick={(date) => {
-                  setSelectedDate(date);
-                  setView("day");
-                }}
-                onEventClick={(event) => {
-                  setActiveEvent(event);
-                  setIsEventOpen(true);
-                }}
-                events={events}
-                maxVisibleEvents={3}
-                className="w-full"
-              />
+            <div className="rounded-lg border bg-background overflow-x-auto">
+              <div className="min-w-[600px] sm:min-w-0">
+                <Calendar
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  onDayClick={(date) => {
+                    setSelectedDate(date);
+                    setView("day");
+                  }}
+                  onEventClick={(event) => {
+                    setActiveEvent(event);
+                    setIsEventOpen(true);
+                  }}
+                  events={events}
+                  maxVisibleEvents={3}
+                  className="w-full"
+                />
+              </div>
             </div>
           )}
 
@@ -386,7 +388,7 @@ export default function CalendarPage() {
       </Dialog>
 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create Event</DialogTitle>
             <DialogDescription>

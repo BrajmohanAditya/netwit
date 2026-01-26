@@ -11,24 +11,32 @@ interface NavbarProps {
 
 export function Navbar({ onMenuClick }: NavbarProps) {
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full h-full px-4 sm:px-6 gap-3 sm:gap-4">
+    <div className="flex flex-row items-center justify-between w-full h-full px-4 sm:px-6 gap-2 sm:gap-4">
       {/* Search Bar */}
-      <div className="flex items-center gap-2 flex-1 w-full sm:max-w-md px-1 py-1">
+      <div className="flex items-center gap-2 flex-1 sm:max-w-md px-1 py-1">
         <button
           onClick={onMenuClick}
-          className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+          className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 flex-shrink-0"
           aria-label="Open sidebar"
           type="button"
         >
           <Menu className="h-5 w-5" />
         </button>
-        <SearchBar />
+        <div className="flex-1 w-full">
+          <SearchBar />
+        </div>
       </div>
 
       {/* Notifications + Admin Profile */}
-      <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 w-full sm:w-auto">
+      <div className="flex items-center justify-end gap-2 sm:gap-4 flex-shrink-0 hidden sm:flex">
         <Notifications />
         <AdminProfile />
+      </div>
+
+      {/* Mobile Profile (Simplified) */}
+      <div className="flex sm:hidden items-center gap-2">
+        <Notifications />
+        {/* Profile Avatar Only for Mobile could go here if AdminProfile is too big */}
       </div>
     </div>
   );

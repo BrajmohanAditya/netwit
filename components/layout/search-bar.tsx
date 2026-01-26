@@ -10,12 +10,11 @@ export function SearchBar() {
   return (
     <div
       className={cn(
-        "flex items-center gap-3 px-4 py-2 rounded-md border border-gray-200 bg-white transition-all duration-150",
+        "flex w-full sm:w-auto items-center gap-3 px-4 py-2 rounded-md border border-gray-200 bg-white transition-all duration-150",
         isFocused
           ? "border-primary shadow-elevation-2"
           : "hover:border-gray-300",
       )}
-      style={{ width: "clamp(400px, 50vw, 600px)" }}
     >
       <Search className="h-4 w-4 text-gray-400" />
       <input
