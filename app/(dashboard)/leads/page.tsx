@@ -106,7 +106,7 @@ const leadCardDetails: Record<
     vehicleLabel?: string;
     assignedTo?: string;
     createdLabel?: string;
-    priority?: "high" | "medium" | "low";
+    priority?: "High" | "Medium" | "Low";
   }
 > = {
   "1": {
@@ -116,7 +116,7 @@ const leadCardDetails: Record<
     vehicleLabel: "2021 Ford F-150",
     assignedTo: "Agam Chawla",
     createdLabel: "2 days ago",
-    priority: "high",
+    priority: "High",
   },
   "2": {
     name: "Mia Patel",
@@ -125,7 +125,7 @@ const leadCardDetails: Record<
     vehicleLabel: "2019 Honda Civic",
     assignedTo: "Kyle Pierce",
     createdLabel: "5 hours ago",
-    priority: "medium",
+    priority: "Medium",
   },
   "3": {
     name: "Leo Garcia",
@@ -134,7 +134,7 @@ const leadCardDetails: Record<
     vehicleLabel: "2020 Toyota RAV4",
     assignedTo: "Unassigned",
     createdLabel: "Today",
-    priority: "low",
+    priority: "Low",
   },
   "4": {
     name: "Sofia Chen",
@@ -143,7 +143,7 @@ const leadCardDetails: Record<
     vehicleLabel: "2020 Toyota Camry",
     assignedTo: "Amy Richards",
     createdLabel: "Yesterday",
-    priority: "medium",
+    priority: "Medium",
   },
 };
 
