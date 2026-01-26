@@ -51,7 +51,7 @@ export function DashboardClient({
   };
 
   const handleLeadsClick = () => {
-    router.push("/dashboard/leads");
+    router.push("/leads");
   };
 
   const handleInventoryClick = () => {
@@ -59,15 +59,15 @@ export function DashboardClient({
   };
 
   const handleDealsClick = () => {
-    router.push("/dashboard/deals");
+    router.push("/deals");
   };
 
   const handleTestDrivesClick = () => {
-    router.push("/dashboard/test-drives");
+    router.push("/test-drives");
   };
 
   const handleRevenueClick = () => {
-    router.push("/dashboard/invoices");
+    router.push("/invoices");
   };
 
   const handleCreateLead = () => {
@@ -83,7 +83,7 @@ export function DashboardClient({
   };
 
   const handleViewAllLeads = () => {
-    router.push("/dashboard/leads");
+    router.push("/leads");
   };
 
   const now = new Date();

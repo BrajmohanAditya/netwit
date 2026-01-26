@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Vehicle, VehicleFilters, VehicleStats } from "@/types/vehicle";
 import { VehiclePageHeader } from "./page-header";
 import { FilterBar } from "./filter-bar";
@@ -13,6 +14,9 @@ interface VehicleListingProps {
 }
 
 export function VehicleListing({ vehicles }: VehicleListingProps) {
+  const router = useRouter();
+  const [items, setItems] = useState<Vehicle[]>(vehicles);
+  const storageKey = "inventory.deletedVehicleIds";
   const [view, setView] = useState<"grid" | "table">("grid");
   const [selectedVehicles, setSelectedVehicles] = useState<Set<string>>(
     new Set(),
@@ -29,9 +33,21 @@ export function VehicleListing({ vehicles }: VehicleListingProps) {
     bodyType: [],
   });
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem(storageKey);
+    if (!stored) return;
+    try {
+      const deletedIds = new Set<string>(JSON.parse(stored));
+      setItems(vehicles.filter((vehicle) => !deletedIds.has(vehicle.id)));
+    } catch {
+      window.localStorage.removeItem(storageKey);
+    }
+  }, [storageKey, vehicles]);
+
   // Filter vehicles based on current filters
   const filteredVehicles = useMemo(() => {
-    return vehicles.filter((vehicle) => {
+    return items.filter((vehicle) => {
       // Search filter
       if (filters.search) {
         const search = filters.search.toLowerCase();
@@ -102,17 +118,17 @@ export function VehicleListing({ vehicles }: VehicleListingProps) {
 
       return true;
     });
-  }, [vehicles, filters]);
+  }, [items, filters]);
 
   // Calculate stats
   const stats: VehicleStats = useMemo(() => {
     return {
-      total: vehicles.length,
-      active: vehicles.filter((v) => v.status === "active").length,
-      sold: vehicles.filter((v) => v.status === "sold").length,
-      totalValue: vehicles.reduce((sum, v) => sum + v.retailPrice, 0),
+      total: items.length,
+      active: items.filter((v) => v.status === "active").length,
+      sold: items.filter((v) => v.status === "sold").length,
+      totalValue: items.reduce((sum, v) => sum + v.retailPrice, 0),
     };
-  }, [vehicles]);
+  }, [items]);
 
   const handleSelectVehicle = (id: string, selected: boolean) => {
     const newSelected = new Set(selectedVehicles);
@@ -133,23 +149,37 @@ export function VehicleListing({ vehicles }: VehicleListingProps) {
   };
 
   const handleEdit = (vehicle: Vehicle) => {
-    console.log("Edit vehicle:", vehicle);
-    // TODO: Implement edit functionality
+    router.push(`/inventory/${vehicle.id}/edit`);
   };
 
   const handleView = (vehicle: Vehicle) => {
-    console.log("View vehicle:", vehicle);
-    // TODO: Implement view functionality
+    router.push(`/inventory/${vehicle.id}`);
   };
 
   const handleDelete = (id: string) => {
-    console.log("Delete vehicle:", id);
-    // TODO: Implement delete functionality
+    if (typeof window !== "undefined") {
+      const stored = window.localStorage.getItem(storageKey);
+      const deletedIds = new Set<string>(stored ? JSON.parse(stored) : []);
+      deletedIds.add(id);
+      window.localStorage.setItem(storageKey, JSON.stringify([...deletedIds]));
+    }
+    setItems((prev) => prev.filter((vehicle) => vehicle.id !== id));
+    setSelectedVehicles((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   };
 
   const handleBulkDelete = () => {
-    console.log("Delete vehicles:", Array.from(selectedVehicles));
-    // TODO: Implement bulk delete functionality
+    const idsToDelete = new Set(selectedVehicles);
+    if (typeof window !== "undefined" && idsToDelete.size > 0) {
+      const stored = window.localStorage.getItem(storageKey);
+      const deletedIds = new Set<string>(stored ? JSON.parse(stored) : []);
+      idsToDelete.forEach((id) => deletedIds.add(id));
+      window.localStorage.setItem(storageKey, JSON.stringify([...deletedIds]));
+    }
+    setItems((prev) => prev.filter((vehicle) => !idsToDelete.has(vehicle.id)));
     setSelectedVehicles(new Set());
   };
 
