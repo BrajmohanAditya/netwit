@@ -21,7 +21,7 @@ interface LeadDetailModalProps {
     sourceLabel?: string;
     createdLabel?: string;
     assignedTo?: string;
-    priority?: "High" | "Medium" | "Low";
+    priority?: "high" | "medium" | "low";
   };
 }
 
@@ -96,10 +96,10 @@ export function LeadDetailModal({
                     <option value="Negotiating">Negotiating</option>
                     <option value="Converted">Converted</option>
                   </Select>
-                  <Select defaultValue={details?.priority || "Medium"}>
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
+                  <Select defaultValue={details?.priority || "medium"}>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
                   </Select>
                   <Input placeholder="Source" defaultValue={sourceLabel} />
                   <Input placeholder="Lead Score" defaultValue="82" />
