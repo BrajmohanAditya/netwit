@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { StatCards } from "@/components/dashboard/stat-cards";
 import { LeadSourceChart } from "@/components/dashboard/lead-source-chart";
@@ -11,6 +12,15 @@ import { TopVehiclesChart } from "@/components/dashboard/top-vehicles-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { LayoutDashboard, TrendingUp, Sparkles, RefreshCw } from "lucide-react";
 import { DashboardMetrics } from "@/lib/services/dashboard.service";
 
@@ -24,6 +34,17 @@ export function DashboardClient({
   recentLeads,
 }: DashboardClientProps) {
   const router = useRouter();
+  const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
+
+  const kanbanStatuses = [
+    "Not Started",
+    "In Progress",
+    "Contacted",
+    "Qualified",
+    "Appointment",
+    "Negotiating",
+    "Converted",
+  ];
 
   const handleRefresh = async () => {
     router.refresh();
@@ -50,7 +71,7 @@ export function DashboardClient({
   };
 
   const handleCreateLead = () => {
-    router.push("/dashboard/leads/new");
+    setIsNewLeadOpen(true);
   };
 
   const handleAddVehicle = () => {
@@ -58,7 +79,7 @@ export function DashboardClient({
   };
 
   const handleScheduleTestDrive = () => {
-    router.push("/dashboard/test-drives/new");
+    router.push("/test-drives");
   };
 
   const handleViewAllLeads = () => {
@@ -115,6 +136,58 @@ export function DashboardClient({
         onTestDrivesClick={handleTestDrivesClick}
         onRevenueClick={handleRevenueClick}
       />
+
+      <Dialog open={isNewLeadOpen} onOpenChange={setIsNewLeadOpen}>
+        <DialogContent className="max-w-[640px] w-[95vw]">
+          <DialogHeader>
+            <DialogTitle>New Lead</DialogTitle>
+            <DialogDescription>
+              Capture the customer details and lead information to get started.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              <Input placeholder="Full name" />
+              <Input placeholder="Email" type="email" />
+              <Input placeholder="Phone" type="tel" />
+              <Input placeholder="Company (optional)" />
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <Select defaultValue="Website">
+                <option value="Website">Website</option>
+                <option value="Referral">Referral</option>
+                <option value="Walk-in">Walk-in</option>
+                <option value="Phone">Phone</option>
+                <option value="Marketplace">Marketplace</option>
+              </Select>
+              <Select defaultValue="Not Started">
+                {kanbanStatuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </Select>
+              <Select defaultValue="Unassigned">
+                <option value="Unassigned">Unassigned</option>
+                <option value="Agam Chawla">Agam Chawla</option>
+                <option value="Kyle Pierce">Kyle Pierce</option>
+                <option value="Amy Richards">Amy Richards</option>
+              </Select>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <Input placeholder="Vehicle interest" />
+              <Input placeholder="Lead source details" />
+            </div>
+            <Input placeholder="Notes" />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setIsNewLeadOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => setIsNewLeadOpen(false)}>Create Lead</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Two-Column: Lead Source + Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
