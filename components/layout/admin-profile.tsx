@@ -3,9 +3,15 @@
 import { useState } from "react";
 import { ChevronDown, LogOut, User, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "react-hot-toast";
 
 export function AdminProfile() {
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleSignOut = () => {
+    toast.success("Signed out successfully!");
+    setIsOpen(false);
+  };
 
   return (
     <div className="relative">
@@ -50,7 +56,10 @@ export function AdminProfile() {
 
             <div className="border-t border-gray-200"></div>
 
-            <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-destructive-light transition-colors duration-150">
+            <button
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-destructive-light transition-colors duration-150"
+              onClick={handleSignOut}
+            >
               <LogOut className="h-4 w-4" />
               Sign Out
             </button>

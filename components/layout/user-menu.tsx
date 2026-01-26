@@ -7,6 +7,7 @@ import { LogOut, Settings, User, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 interface UserMenuProps {
   user?: {
@@ -26,7 +27,8 @@ export function UserMenu({ user }: UserMenuProps) {
   const handleLogout = async () => {
     setIsLoading(true);
     try {
-      // Clear any stored auth data
+      const supabase = createClient();
+      await supabase.auth.signOut();
       localStorage.clear();
       router.push("/");
       toast.success("Signed out successfully!");
