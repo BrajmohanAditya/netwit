@@ -178,6 +178,10 @@ function Toast({
 function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = React.useState<ToastProps[]>([]);
 
+  const removeToast = React.useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   const addToast = React.useCallback(
     (toast: Omit<ToastProps, "id" | "onClose">) => {
       const id = `toast-${Date.now()}-${Math.random()}`;
@@ -191,12 +195,8 @@ function ToastProvider({ children }: { children: React.ReactNode }) {
         return [...newToasts, { ...toast, id, onClose: removeToast }];
       });
     },
-    [],
+    [removeToast],
   );
-
-  const removeToast = React.useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
 
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast }}>

@@ -98,7 +98,7 @@ export default function TasksPage() {
           onClick={() => setIsCreateTaskOpen(true)}
         >
           + Create
-        </Button>>
+        </Button>
       </div>
 
       {/* Views */}
@@ -292,12 +292,22 @@ export default function TasksPage() {
           </DialogHeader>
           <div className="grid gap-6 py-4">
             <div className="space-y-2">
-              <Label htmlFor="title" className="text-sm font-semibold text-gray-700">Title</Label>
+              <Label
+                htmlFor="title"
+                className="text-sm font-semibold text-gray-700"
+              >
+                Title
+              </Label>
               <Input id="title" placeholder="Task title" />
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-sm font-semibold text-gray-700">Description</Label>
+              <Label
+                htmlFor="description"
+                className="text-sm font-semibold text-gray-700"
+              >
+                Description
+              </Label>
               <textarea
                 id="description"
                 className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -307,7 +317,12 @@ export default function TasksPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="assignTo" className="text-sm font-semibold text-gray-700">Assign To</Label>
+              <Label
+                htmlFor="assignTo"
+                className="text-sm font-semibold text-gray-700"
+              >
+                Assign To
+              </Label>
               <Select id="assignTo">
                 <option value="">Select user</option>
                 <option value="Ava Carter">Ava Carter</option>
@@ -316,7 +331,12 @@ export default function TasksPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="priority" className="text-sm font-semibold text-gray-700">Priority</Label>
+              <Label
+                htmlFor="priority"
+                className="text-sm font-semibold text-gray-700"
+              >
+                Priority
+              </Label>
               <Select id="priority">
                 <option value="Medium">Medium</option>
                 <option value="Urgent">Urgent</option>
@@ -326,12 +346,20 @@ export default function TasksPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dueDate" className="text-sm font-semibold text-gray-700">Due Date</Label>
+              <Label
+                htmlFor="dueDate"
+                className="text-sm font-semibold text-gray-700"
+              >
+                Due Date
+              </Label>
               <Input id="dueDate" type="date" placeholder="mm/dd/yyyy" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateTaskOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateTaskOpen(false)}
+            >
               Cancel
             </Button>
             <Button

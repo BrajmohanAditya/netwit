@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle } from "lucide-react";
@@ -221,10 +222,11 @@ export function Step5Review({
                 key={index}
                 className="relative bg-gray-100 rounded-lg overflow-hidden aspect-square"
               >
-                <img
+                <Image
                   src={image}
                   alt={`Vehicle ${index + 1}`}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
                 {index === data.primaryImageIndex && (
                   <div className="absolute top-1 right-1 bg-amber-500 text-white text-xs px-2 py-1 rounded font-semibold">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Upload, X, Star } from "lucide-react";
@@ -149,10 +150,11 @@ export function Step4ImagesDescription({
                 key={index}
                 className="relative group bg-gray-100 rounded-lg overflow-hidden aspect-square"
               >
-                <img
+                <Image
                   src={image}
                   alt={`Preview ${index + 1}`}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
 
                 {/* Primary Badge */}
