@@ -9,7 +9,13 @@ interface FilterBarProps {
   onFiltersChange: (filters: VehicleFilters) => void;
 }
 
-const STATUS_OPTIONS = ["All", "Active", "Inactive", "Sold", "Coming Soon"];
+const STATUS_OPTIONS = [
+  { label: "All", value: "all" },
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
+  { label: "Sold", value: "sold" },
+  { label: "Coming Soon", value: "coming-soon" },
+];
 const MAKE_OPTIONS = [
   "Ford",
   "Chevrolet",
@@ -18,10 +24,13 @@ const MAKE_OPTIONS = [
   "BMW",
   "Mercedes",
 ];
-const YEAR_OPTIONS = Array.from(
-  { length: 20 },
-  (_, i) => new Date().getFullYear() - i,
-);
+const YEAR_OPTIONS = [
+  { label: "All", value: "all" },
+  ...Array.from({ length: 20 }, (_, i) => {
+    const year = new Date().getFullYear() - i;
+    return { label: String(year), value: String(year) };
+  }),
+];
 
 export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
   const [isExpandedFilters, setIsExpandedFilters] = useState(false);
@@ -31,17 +40,8 @@ export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
   };
 
   const handleStatusChange = (status: string) => {
-    const statusMap: Record<
-      string,
-      "active" | "inactive" | "sold" | "coming-soon"
-    > = {
-      Active: "active",
-      Inactive: "inactive",
-      Sold: "sold",
-      "Coming Soon": "coming-soon",
-    };
-
-    const newStatus = status === "All" ? [] : [statusMap[status]];
+    const newStatus =
+      status === "all" ? [] : [status as VehicleFilters["status"][number]];
     onFiltersChange({ ...filters, status: newStatus });
   };
 
@@ -52,7 +52,16 @@ export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
     onFiltersChange({ ...filters, make: newMakes });
   };
 
-  const handleYearChange = (year: number) => {
+  const handleYearChange = (value: string) => {
+    if (value === "all") {
+      onFiltersChange({
+        ...filters,
+        year: [0, new Date().getFullYear()],
+      });
+      return;
+    }
+
+    const year = Number(value);
     onFiltersChange({
       ...filters,
       year: [year, filters.year[1]],
@@ -63,14 +72,14 @@ export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
     filters.search ||
     filters.status.length > 0 ||
     filters.make.length > 0 ||
-    filters.year[0] !== new Date().getFullYear() - 10;
+    filters.year[0] !== 0;
 
   const handleClearAll = () => {
     onFiltersChange({
       search: "",
       status: [],
       make: [],
-      year: [new Date().getFullYear() - 10, new Date().getFullYear()],
+      year: [0, new Date().getFullYear()],
       price: [0, 100000],
       odometer: [0, 200000],
       fuel: [],
@@ -112,8 +121,8 @@ export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent appearance-none cursor-pointer bg-white"
             >
               {STATUS_OPTIONS.map((status) => (
-                <option key={status} value={status.toLowerCase()}>
-                  {status}
+                <option key={status.value} value={status.value}>
+                  {status.label}
                 </option>
               ))}
             </select>
@@ -149,13 +158,13 @@ export function FilterBar({ filters, onFiltersChange }: FilterBarProps) {
           </label>
           <div className="relative">
             <select
-              value={filters.year[0]}
-              onChange={(e) => handleYearChange(Number(e.target.value))}
+              value={filters.year[0] === 0 ? "all" : String(filters.year[0])}
+              onChange={(e) => handleYearChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent appearance-none cursor-pointer bg-white"
             >
               {YEAR_OPTIONS.map((year) => (
-                <option key={year} value={year}>
-                  {year}
+                <option key={year.value} value={year.value}>
+                  {year.label}
                 </option>
               ))}
             </select>

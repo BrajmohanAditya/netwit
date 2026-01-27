@@ -5,6 +5,8 @@ import { Vehicle } from "@/types/vehicle";
 
 type DbVehicle = Database["public"]["Tables"]["vehicles"]["Row"];
 
+export const dynamic = "force-dynamic";
+
 const statusMap: Record<DbVehicle["status"], Vehicle["status"]> = {
   Active: "active",
   Inactive: "inactive",

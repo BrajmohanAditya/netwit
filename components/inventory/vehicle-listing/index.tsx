@@ -27,7 +27,7 @@ export function VehicleListing({ vehicles }: VehicleListingProps) {
     search: "",
     status: [],
     make: [],
-    year: [new Date().getFullYear() - 10, new Date().getFullYear()],
+    year: [0, new Date().getFullYear()],
     price: [0, 100000],
     odometer: [0, 200000],
     fuel: [],

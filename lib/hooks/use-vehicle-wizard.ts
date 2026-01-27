@@ -202,7 +202,16 @@ export function useVehicleWizard() {
         onSuccess?.(formData);
       } catch (error) {
         console.error("Failed to submit form:", error);
-        toast.error("Failed to add vehicle. Please try again.");
+        if (
+          error &&
+          typeof error === "object" &&
+          "code" in error &&
+          (error as { code?: string }).code === "23505"
+        ) {
+          toast.error("A vehicle with this VIN already exists.");
+        } else {
+          toast.error("Failed to add vehicle. Please try again.");
+        }
         throw error;
       } finally {
         setIsLoading(false);
