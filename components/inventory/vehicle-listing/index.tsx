@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Vehicle, VehicleFilters, VehicleStats } from "@/types/vehicle";
 import { VehiclePageHeader } from "./page-header";
@@ -8,6 +8,8 @@ import { FilterBar } from "./filter-bar";
 import { VehicleGrid } from "./vehicle-grid";
 import { VehicleTable } from "./vehicle-table";
 import { BulkActionsBar } from "./bulk-actions-bar";
+import { createClient } from "@/lib/supabase/client";
+import toast from "react-hot-toast";
 
 interface VehicleListingProps {
   vehicles: Vehicle[];
@@ -16,7 +18,7 @@ interface VehicleListingProps {
 export function VehicleListing({ vehicles }: VehicleListingProps) {
   const router = useRouter();
   const [items, setItems] = useState<Vehicle[]>(vehicles);
-  const storageKey = "inventory.deletedVehicleIds";
+  const supabase = useMemo(() => createClient(), []);
   const [view, setView] = useState<"grid" | "table">("grid");
   const [selectedVehicles, setSelectedVehicles] = useState<Set<string>>(
     new Set(),
@@ -33,17 +35,20 @@ export function VehicleListing({ vehicles }: VehicleListingProps) {
     bodyType: [],
   });
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = window.localStorage.getItem(storageKey);
-    if (!stored) return;
-    try {
-      const deletedIds = new Set<string>(JSON.parse(stored));
-      setItems(vehicles.filter((vehicle) => !deletedIds.has(vehicle.id)));
-    } catch {
-      window.localStorage.removeItem(storageKey);
+  const toDbStatus = (status: Vehicle["status"]) => {
+    switch (status) {
+      case "active":
+        return "Active";
+      case "inactive":
+        return "Inactive";
+      case "sold":
+        return "Sold";
+      case "coming-soon":
+        return "Coming Soon";
+      default:
+        return "Inactive";
     }
-  }, [storageKey, vehicles]);
+  };
 
   // Filter vehicles based on current filters
   const filteredVehicles = useMemo(() => {
@@ -156,41 +161,132 @@ export function VehicleListing({ vehicles }: VehicleListingProps) {
     router.push(`/inventory/${vehicle.id}`);
   };
 
-  const handleDelete = (id: string) => {
-    if (typeof window !== "undefined") {
-      const stored = window.localStorage.getItem(storageKey);
-      const deletedIds = new Set<string>(stored ? JSON.parse(stored) : []);
-      deletedIds.add(id);
-      window.localStorage.setItem(storageKey, JSON.stringify([...deletedIds]));
-    }
+  const handleDelete = async (id: string) => {
+    const previousItems = items;
     setItems((prev) => prev.filter((vehicle) => vehicle.id !== id));
     setSelectedVehicles((prev) => {
       const next = new Set(prev);
       next.delete(id);
       return next;
     });
+
+    const { error } = await supabase.from("vehicles").delete().eq("id", id);
+    if (error) {
+      setItems(previousItems);
+      toast.error("Failed to delete vehicle. Please try again.");
+    } else {
+      toast.success("Vehicle deleted successfully.");
+    }
   };
 
-  const handleBulkDelete = () => {
-    const idsToDelete = new Set(selectedVehicles);
-    if (typeof window !== "undefined" && idsToDelete.size > 0) {
-      const stored = window.localStorage.getItem(storageKey);
-      const deletedIds = new Set<string>(stored ? JSON.parse(stored) : []);
-      idsToDelete.forEach((id) => deletedIds.add(id));
-      window.localStorage.setItem(storageKey, JSON.stringify([...deletedIds]));
-    }
-    setItems((prev) => prev.filter((vehicle) => !idsToDelete.has(vehicle.id)));
+  const handleBulkDelete = async () => {
+    const idsToDelete = Array.from(selectedVehicles);
+    if (idsToDelete.length === 0) return;
+
+    const previousItems = items;
+    setItems((prev) =>
+      prev.filter((vehicle) => !selectedVehicles.has(vehicle.id)),
+    );
     setSelectedVehicles(new Set());
+
+    const { error } = await supabase
+      .from("vehicles")
+      .delete()
+      .in("id", idsToDelete);
+
+    if (error) {
+      setItems(previousItems);
+      toast.error("Failed to delete selected vehicles.");
+    } else {
+      toast.success("Selected vehicles deleted.");
+    }
   };
 
   const handleExport = () => {
-    console.log("Export vehicles:", Array.from(selectedVehicles));
-    // TODO: Implement export functionality
+    const selected = items.filter((vehicle) =>
+      selectedVehicles.has(vehicle.id),
+    );
+    if (selected.length === 0) return;
+
+    const headers = [
+      "Stock Number",
+      "Year",
+      "Make",
+      "Model",
+      "Trim",
+      "VIN",
+      "Status",
+      "Odometer",
+      "Purchase Price",
+      "Retail Price",
+    ];
+
+    const rows = selected.map((vehicle) => [
+      vehicle.stockNumber,
+      vehicle.year,
+      vehicle.make,
+      vehicle.model,
+      vehicle.trim,
+      vehicle.vin,
+      vehicle.status,
+      vehicle.odometer,
+      vehicle.purchasePrice,
+      vehicle.retailPrice,
+    ]);
+
+    const csv = [headers, ...rows]
+      .map((row) =>
+        row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","),
+      )
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `inventory-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
-  const handleChangeStatus = () => {
-    console.log("Change status for vehicles:", Array.from(selectedVehicles));
-    // TODO: Implement change status functionality
+  const handleChangeStatus = async () => {
+    const selected = items.filter((vehicle) =>
+      selectedVehicles.has(vehicle.id),
+    );
+    if (selected.length === 0) return;
+
+    const updatable = selected.filter((vehicle) => vehicle.status !== "sold");
+    if (updatable.length === 0) {
+      toast.error("Selected vehicles cannot be updated.");
+      return;
+    }
+
+    const allInactive = updatable.every(
+      (vehicle) => vehicle.status === "inactive",
+    );
+    const nextStatus: Vehicle["status"] = allInactive ? "active" : "inactive";
+
+    const previousItems = items;
+    setItems((prev) =>
+      prev.map((vehicle) =>
+        selectedVehicles.has(vehicle.id) && vehicle.status !== "sold"
+          ? { ...vehicle, status: nextStatus }
+          : vehicle,
+      ),
+    );
+
+    const idsToUpdate = updatable.map((vehicle) => vehicle.id);
+    const { error } = await supabase
+      .from("vehicles")
+      .update({ status: toDbStatus(nextStatus) })
+      .in("id", idsToUpdate);
+
+    if (error) {
+      setItems(previousItems);
+      toast.error("Failed to update status.");
+    } else {
+      toast.success("Status updated successfully.");
+    }
   };
 
   return (
