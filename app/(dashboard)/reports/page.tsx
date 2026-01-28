@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useReactToPrint } from "react-to-print";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,59 @@ export default function ReportsPage() {
     status: "",
   });
   const [showOutput, setShowOutput] = useState(false);
+  const outputRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    content: () => outputRef.current as any,
+    documentTitle: `${reportType} Report`,
+  });
+
+  const handlePrintReport = () => {
+    if (!outputRef.current) {
+      setShowOutput(true);
+      setTimeout(() => {
+        handlePrint();
+      }, 0);
+      return;
+    }
+    handlePrint();
+  };
+
+  const handleExportExcel = () => {
+    const rows = [
+      ["Report Type", reportType],
+      ["Date Range", dateRange.preset || "Custom"],
+      ["From", dateRange.from || ""],
+      ["To", dateRange.to || ""],
+      ["Salesperson", filters.salesperson || "All"],
+      ["Vehicle Make", filters.vehicleMake || "All"],
+      ["Status", filters.status || "All"],
+      [],
+      ["Metric", "Value"],
+      ["Total Deals", "12"],
+      ["Total Revenue", "$450K"],
+      ["Avg Deal", "$37.5K"],
+      ["Commission", "$18K"],
+      ["Top Salesperson", "Agam Chawla - 5 deals"],
+      ["Top Vehicle", "Ford Mustang - 3 sold"],
+    ];
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      rows.map((row) => row.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "report_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportPdf = () => {
+    handlePrintReport();
+  };
 
   return (
     <div className="flex-1 space-y-6 px-6 py-6">
@@ -163,7 +217,10 @@ export default function ReportsPage() {
               Report Output
             </div>
 
-            <div className="space-y-3 rounded-lg border bg-background p-4 text-sm">
+            <div
+              ref={outputRef}
+              className="space-y-3 rounded-lg border bg-background p-4 text-sm"
+            >
               <div className="space-y-1">
                 <div className="font-semibold">{reportType}</div>
                 <div className="text-muted-foreground">
@@ -192,13 +249,13 @@ export default function ReportsPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" size="sm">
+              <Button variant="secondary" size="sm" onClick={handleExportPdf}>
                 Export PDF
               </Button>
-              <Button variant="secondary" size="sm">
+              <Button variant="secondary" size="sm" onClick={handleExportExcel}>
                 Export Excel
               </Button>
-              <Button variant="secondary" size="sm">
+              <Button variant="secondary" size="sm" onClick={handlePrintReport}>
                 Print
               </Button>
             </div>

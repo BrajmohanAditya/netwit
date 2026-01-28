@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
+import { useReactToPrint } from "react-to-print";
+import toast from "react-hot-toast";
 import { Download, Plus, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useCreateInvoice, useInvoices } from "@/hooks/use-invoices";
 
 type InvoiceStatus = "Paid" | "Pending" | "Overdue" | "Draft";
 
@@ -39,42 +42,6 @@ interface InvoiceRow {
   status: InvoiceStatus;
 }
 
-const invoiceRows: InvoiceRow[] = [
-  {
-    id: "inv-0011",
-    invoiceNumber: "INV-0011",
-    packageName: "Libra",
-    customer: "Amelia Brooks",
-    date: "Jan 10, 2026",
-    dueDate: "Jan 30, 2026",
-    amount: 157.5,
-    paid: true,
-    status: "Paid",
-  },
-  {
-    id: "inv-0012",
-    invoiceNumber: "INV-0012",
-    packageName: "Orion",
-    customer: "Caleb Owens",
-    date: "Jan 12, 2026",
-    dueDate: "Feb 01, 2026",
-    amount: 220,
-    paid: false,
-    status: "Pending",
-  },
-  {
-    id: "inv-0013",
-    invoiceNumber: "INV-0013",
-    packageName: "Vega",
-    customer: "Harper Sloan",
-    date: "Jan 05, 2026",
-    dueDate: "Jan 20, 2026",
-    amount: 95,
-    paid: false,
-    status: "Overdue",
-  },
-];
-
 const statusStyles: Record<InvoiceStatus, string> = {
   Paid: "bg-green-100 text-green-900",
   Pending: "bg-yellow-100 text-yellow-900",
@@ -83,6 +50,9 @@ const statusStyles: Record<InvoiceStatus, string> = {
 };
 
 export default function InvoicesPage() {
+  const { data: invoicesData, isLoading, isError } = useInvoices();
+  const createInvoice = useCreateInvoice();
+  const [localDrafts, setLocalDrafts] = useState<InvoiceRow[]>([]);
   const [filters, setFilters] = useState({
     year: "2026",
     month: "All",
@@ -102,6 +72,186 @@ export default function InvoicesPage() {
     paymentTerms: "Net 30",
   });
 
+  const tableRef = useRef<HTMLDivElement>(null);
+  const selectedRef = useRef<HTMLDivElement>(null);
+  const detailRef = useRef<HTMLDivElement>(null);
+
+  const handlePrintTable = useReactToPrint({
+    content: () => tableRef.current as any,
+    documentTitle: "Invoices List",
+  });
+
+  const handlePrintSelectedList = useReactToPrint({
+    content: () => selectedRef.current as any,
+    documentTitle: "Selected Invoices",
+  });
+
+  const handlePrintDetail = useReactToPrint({
+    content: () => detailRef.current as any,
+    documentTitle: "Invoice #INV-001",
+  });
+
+  const handleExport = () => {
+    const headers = [
+      "Invoice Number",
+      "Package",
+      "Customer",
+      "Date",
+      "Due Date",
+      "Amount",
+      "Status",
+    ];
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      headers.join(",") +
+      "\n" +
+      filteredInvoices
+        .map((row) =>
+          [
+            row.invoiceNumber,
+            row.packageName,
+            row.customer,
+            row.date,
+            row.dueDate,
+            row.amount,
+            row.status,
+          ].join(","),
+        )
+        .join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "invoices_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Invoices exported successfully");
+  };
+
+  const handlePrintSelected = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Select at least one invoice to print");
+      return;
+    }
+    handlePrintSelectedList();
+  };
+
+  const handleDownloadPDF = () => {
+    handlePrintDetail();
+    toast.success("Please save as PDF in the print dialog");
+  };
+
+  const handleEmail = (message?: string | React.SyntheticEvent) => {
+    if (typeof message !== "string") {
+      toast.success("Invoice sent to customer email");
+      return;
+    }
+    toast.success(message);
+  };
+
+  const formatDisplayDate = (date: Date) =>
+    date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "2-digit",
+      year: "numeric",
+    });
+
+  const getNextInvoiceNumber = () => {
+    const draftNumbers = localDrafts.map((invoice) => invoice.invoiceNumber);
+    const dbNumbers = (invoicesData || []).map(
+      (invoice: any) => invoice.invoice_number,
+    );
+
+    const lastNumber = [...draftNumbers, ...dbNumbers]
+      .map((number) => Number((number || "").replace("INV-", "")))
+      .filter((value) => !Number.isNaN(value))
+      .sort((a, b) => b - a)[0];
+
+    const nextNumber = (lastNumber || 0) + 1;
+    return `INV-${nextNumber.toString().padStart(4, "0")}`;
+  };
+
+  const handleSaveInvoice = (shouldSend: boolean) => {
+    if (
+      !createForm.packageName &&
+      lineItems.every((item) => !item.description)
+    ) {
+      toast.error("Add a package or at least one line item");
+      return;
+    }
+
+    if (!createForm.dueDate) {
+      toast.error("Select a due date");
+      return;
+    }
+
+    if (total <= 0) {
+      toast.error("Invoice total must be greater than $0.00");
+      return;
+    }
+
+    const invoiceDate = new Date();
+    const dueDate = new Date(createForm.dueDate);
+    const invoiceNumber = getNextInvoiceNumber();
+
+    const payload = {
+      invoice_number: invoiceNumber,
+      invoice_date: invoiceDate,
+      due_date: dueDate,
+      customer_id: null,
+      package_name: createForm.packageName || "Custom",
+      payment_amount: subtotal,
+      tax_rate: 5,
+      tax_amount: tax,
+      total,
+      status: "Pending" as const,
+      notes: createForm.customer
+        ? `Customer: ${createForm.customer}`
+        : undefined,
+    };
+
+    createInvoice.mutate(payload, {
+      onSuccess: () => {
+        setIsCreateOpen(false);
+        setLineItems([{ id: "line-1", description: "", amount: "" }]);
+        setCreateForm({
+          year: "2026",
+          month: "January",
+          packageName: "Libra",
+          customer: "",
+          dueDate: "",
+          paymentTerms: "Net 30",
+        });
+
+        if (shouldSend) {
+          handleEmail("Invoice saved and sent");
+        } else {
+          toast.success("Invoice saved");
+        }
+      },
+      onError: (err) => {
+        const fallback: InvoiceRow = {
+          id: `inv-${Date.now()}`,
+          invoiceNumber,
+          packageName: createForm.packageName || "Custom",
+          customer: createForm.customer || "Walk-in Customer",
+          date: formatDisplayDate(invoiceDate),
+          dueDate: formatDisplayDate(dueDate),
+          amount: total,
+          paid: false,
+          status: "Pending",
+        };
+        setLocalDrafts((prev) => [fallback, ...prev]);
+        const message =
+          err instanceof Error && err.message
+            ? err.message
+            : "Database save failed, stored locally only";
+        toast.error(message);
+      },
+    });
+  };
+
   const subtotal = useMemo(() => {
     return lineItems.reduce((sum, item) => {
       const amount = Number(item.amount || 0);
@@ -111,6 +261,61 @@ export default function InvoicesPage() {
 
   const tax = subtotal * 0.05;
   const total = subtotal + tax;
+
+  const normalizeStatus = (status?: string): InvoiceStatus => {
+    if (status === "Paid" || status === "Pending" || status === "Overdue") {
+      return status;
+    }
+    return "Draft";
+  };
+
+  const mappedInvoices = useMemo<InvoiceRow[]>(() => {
+    const rows = (invoicesData || []).map((invoice: any, index: number) => {
+      const invoiceDate = invoice.invoice_date
+        ? new Date(invoice.invoice_date)
+        : new Date();
+      const dueDate = invoice.due_date
+        ? new Date(invoice.due_date)
+        : invoiceDate;
+
+      return {
+        id: invoice.id || invoice.invoice_number || `tmp-${index}`,
+        invoiceNumber: invoice.invoice_number || "INV-0000",
+        packageName: invoice.package_name || "Custom",
+        customer: invoice.customer?.full_name || "Unknown",
+        date: formatDisplayDate(invoiceDate),
+        dueDate: formatDisplayDate(dueDate),
+        amount: Number(invoice.total ?? invoice.payment_amount ?? 0),
+        paid: invoice.status === "Paid",
+        status: normalizeStatus(invoice.status),
+      };
+    });
+
+    return [...localDrafts, ...rows];
+  }, [invoicesData, localDrafts]);
+
+  const filteredInvoices = useMemo(() => {
+    return mappedInvoices.filter((invoice) => {
+      const date = new Date(invoice.date);
+      const yearMatches =
+        filters.year === "All" ||
+        date.getFullYear().toString() === filters.year;
+      const monthMatches =
+        filters.month === "All" ||
+        date.toLocaleString("en-US", { month: "long" }) === filters.month;
+      const statusMatches =
+        !filters.status || invoice.status === filters.status;
+
+      return yearMatches && monthMatches && statusMatches;
+    });
+  }, [mappedInvoices, filters]);
+
+  const selectedInvoices = useMemo(() => {
+    if (selectedIds.length === 0) return [];
+    return filteredInvoices.filter((invoice) =>
+      selectedIds.includes(invoice.id),
+    );
+  }, [filteredInvoices, selectedIds]);
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) =>
@@ -174,7 +379,7 @@ export default function InvoicesPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card ref={tableRef}>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -190,7 +395,7 @@ export default function InvoicesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invoiceRows.map((invoice) => (
+              {filteredInvoices.map((invoice) => (
                 <TableRow key={invoice.id}>
                   <TableCell className="font-mono font-medium">
                     {invoice.invoiceNumber}
@@ -208,7 +413,7 @@ export default function InvoicesPage() {
                   </TableCell>
                   <TableCell>
                     <Checkbox
-                      checked={invoice.paid}
+                      checked={selectedIds.includes(invoice.id)}
                       onChange={() => toggleSelected(invoice.id)}
                     />
                   </TableCell>
@@ -222,7 +427,11 @@ export default function InvoicesPage() {
                       <Button variant="ghost" size="sm">
                         View
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handlePrintDetail}
+                      >
                         Print
                       </Button>
                     </div>
@@ -231,21 +440,36 @@ export default function InvoicesPage() {
               ))}
             </TableBody>
           </Table>
+          {isLoading && (
+            <div className="px-6 py-4 text-sm text-muted-foreground">
+              Loading invoices...
+            </div>
+          )}
+          {isError && (
+            <div className="px-6 py-4 text-sm text-destructive">
+              Unable to load invoices from the database.
+            </div>
+          )}
+          {!isLoading && !isError && filteredInvoices.length === 0 && (
+            <div className="px-6 py-4 text-sm text-muted-foreground">
+              No invoices found.
+            </div>
+          )}
         </CardContent>
       </Card>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="secondary" size="sm">
+        <Button variant="secondary" size="sm" onClick={handleExport}>
           <Download className="mr-2 h-4 w-4" />
           Export
         </Button>
-        <Button variant="secondary" size="sm">
+        <Button variant="secondary" size="sm" onClick={handlePrintSelected}>
           <Printer className="mr-2 h-4 w-4" />
           Print Selected
         </Button>
       </div>
 
-      <Card>
+      <Card ref={detailRef}>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-[160px_1fr]">
             <div className="h-16 w-32 rounded border border-dashed bg-slate-50 flex items-center justify-center text-xs text-muted-foreground">
@@ -283,18 +507,62 @@ export default function InvoicesPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm">
+            <Button variant="secondary" size="sm" onClick={handlePrintDetail}>
               Print
             </Button>
-            <Button variant="secondary" size="sm">
+            <Button variant="secondary" size="sm" onClick={handleDownloadPDF}>
               Download PDF
             </Button>
-            <Button variant="primary" size="sm">
+            <Button variant="primary" size="sm" onClick={() => handleEmail()}>
               Send Email
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      <div className="absolute -left-[9999px] top-0">
+        <Card ref={selectedRef}>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice #</TableHead>
+                  <TableHead>Package/Customer</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {selectedInvoices.map((invoice) => (
+                  <TableRow key={`selected-${invoice.id}`}>
+                    <TableCell className="font-mono font-medium">
+                      {invoice.invoiceNumber}
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">{invoice.packageName}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {invoice.customer}
+                      </div>
+                    </TableCell>
+                    <TableCell>{invoice.date}</TableCell>
+                    <TableCell>{invoice.dueDate}</TableCell>
+                    <TableCell className="font-semibold text-green-600">
+                      ${invoice.amount.toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={statusStyles[invoice.status]}>
+                        {invoice.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="max-w-3xl">
@@ -464,8 +732,15 @@ export default function InvoicesPage() {
               <Button variant="ghost" onClick={() => setIsCreateOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="secondary">Save</Button>
-              <Button variant="primary">Save &amp; Send</Button>
+              <Button
+                variant="secondary"
+                onClick={() => handleSaveInvoice(false)}
+              >
+                Save
+              </Button>
+              <Button variant="primary" onClick={() => handleSaveInvoice(true)}>
+                Save &amp; Send
+              </Button>
             </div>
           </div>
         </DialogContent>

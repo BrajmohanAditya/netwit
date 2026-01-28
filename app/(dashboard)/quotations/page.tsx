@@ -129,7 +129,7 @@ export default function QuotationsPage() {
     <div className="flex-1 space-y-6 px-4 py-6 sm:px-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Quotations</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <Button variant="outline" size="sm" className="w-full sm:w-auto">
             <Download className="mr-2 h-4 w-4" />
             Export
@@ -149,7 +149,7 @@ export default function QuotationsPage() {
         <CardContent className="p-0">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 border-b p-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-              <Label className="sm:w-auto">Search</Label>
+              <Label className="sm:w-auto min-w-16">Search</Label>
               <Input
                 placeholder="Customer, Quote #..."
                 className="w-full sm:w-64"
@@ -160,7 +160,7 @@ export default function QuotationsPage() {
               />
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-              <Label className="sm:w-auto">Status</Label>
+              <Label className="sm:w-auto min-w-16">Status</Label>
               <Select
                 value={filters.status}
                 onChange={(e) =>
@@ -191,14 +191,18 @@ export default function QuotationsPage() {
                       onChange={toggleSelectAll}
                     />
                   </TableHead>
-                  <TableHead>Quote #</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Vehicle/Service</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Expiry</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="min-w-[100px]">Quote #</TableHead>
+                  <TableHead className="min-w-[150px]">Customer</TableHead>
+                  <TableHead className="min-w-[200px]">
+                    Vehicle/Service
+                  </TableHead>
+                  <TableHead className="min-w-[120px]">Date</TableHead>
+                  <TableHead className="min-w-[120px]">Expiry</TableHead>
+                  <TableHead className="min-w-[100px]">Amount</TableHead>
+                  <TableHead className="min-w-[100px]">Status</TableHead>
+                  <TableHead className="text-right min-w-[120px]">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -252,7 +256,7 @@ export default function QuotationsPage() {
       </Card>
 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="mx-auto w-[92vw] max-w-[92vw] sm:w-[640px] sm:max-w-[640px] md:w-[720px] md:max-w-[720px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-lg">
           <DialogHeader>
             <DialogTitle>Create New Quotation</DialogTitle>
             <DialogDescription>
@@ -260,7 +264,7 @@ export default function QuotationsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Customer Name</Label>
                 <Input placeholder="Enter customer name" />
@@ -274,7 +278,7 @@ export default function QuotationsPage() {
               <Label>Vehicle / Subject</Label>
               <Input placeholder="e.g. 2024 Toyota Camry" />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Valid Until</Label>
                 <Input type="date" />
@@ -289,7 +293,7 @@ export default function QuotationsPage() {
               <Input placeholder="Additional notes..." />
             </div>
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
               Cancel
             </Button>

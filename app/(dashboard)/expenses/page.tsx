@@ -86,12 +86,27 @@ const expenseCategories = [
 ];
 
 export default function ExpensesPage() {
+  const [expensesData, setExpensesData] = useState<ExpenseRow[]>(expenses);
   const [filters, setFilters] = useState({
     dateRange: "",
     category: "",
     vehicle: "",
   });
   const [isRecordOpen, setIsRecordOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseRow | null>(
+    null,
+  );
+  const [editForm, setEditForm] = useState({
+    title: "",
+    category: "",
+    amount: "",
+    date: "",
+    vendor: "",
+    vehicle: "",
+    receipt: "",
+  });
   const [recordForm, setRecordForm] = useState({
     title: "",
     category: "",
@@ -103,6 +118,54 @@ export default function ExpensesPage() {
     receipt: "",
     taxDeductible: false,
   });
+
+  const formatDateForInput = (value: string) => {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toISOString().split("T")[0];
+  };
+
+  const handleView = (expense: ExpenseRow) => {
+    setSelectedExpense(expense);
+    setIsViewOpen(true);
+  };
+
+  const handleEdit = (expense: ExpenseRow) => {
+    setSelectedExpense(expense);
+    setEditForm({
+      title: expense.title,
+      category: expense.category,
+      amount: expense.amount.toString(),
+      date: formatDateForInput(expense.date),
+      vendor: expense.vendor,
+      vehicle: expense.vehicle,
+      receipt: expense.receipt,
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!selectedExpense) return;
+    const parsedAmount = Number(editForm.amount || 0);
+    setExpensesData((prev) =>
+      prev.map((expense) =>
+        expense.id === selectedExpense.id
+          ? {
+              ...expense,
+              title: editForm.title,
+              category: editForm.category,
+              amount: Number.isNaN(parsedAmount) ? 0 : parsedAmount,
+              date: editForm.date || expense.date,
+              vendor: editForm.vendor,
+              vehicle: editForm.vehicle,
+              receipt: editForm.receipt,
+            }
+          : expense,
+      ),
+    );
+    setIsEditOpen(false);
+  };
 
   return (
     <div className="flex-1 space-y-6 px-6 py-6">
@@ -202,7 +265,7 @@ export default function ExpensesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {expenses.map((expense) => (
+              {expensesData.map((expense) => (
                 <TableRow key={expense.id}>
                   <TableCell>{expense.date}</TableCell>
                   <TableCell className="font-medium">{expense.title}</TableCell>
@@ -223,10 +286,18 @@ export default function ExpensesPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleView(expense)}
+                      >
                         View
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(expense)}
+                      >
                         Edit
                       </Button>
                     </div>
@@ -237,6 +308,173 @@ export default function ExpensesPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Expense Details</DialogTitle>
+          </DialogHeader>
+          {selectedExpense && (
+            <div className="grid gap-3 text-sm">
+              <div>
+                <span className="font-semibold">Title:</span>{" "}
+                {selectedExpense.title}
+              </div>
+              <div>
+                <span className="font-semibold">Date:</span>{" "}
+                {selectedExpense.date}
+              </div>
+              <div>
+                <span className="font-semibold">Category:</span>{" "}
+                {selectedExpense.category}
+              </div>
+              <div>
+                <span className="font-semibold">Amount:</span> $
+                {selectedExpense.amount.toFixed(2)}
+              </div>
+              <div>
+                <span className="font-semibold">Vendor:</span>{" "}
+                {selectedExpense.vendor}
+              </div>
+              <div>
+                <span className="font-semibold">Vehicle:</span>{" "}
+                {selectedExpense.vehicle}
+              </div>
+              <div>
+                <span className="font-semibold">Receipt:</span>{" "}
+                {selectedExpense.receipt}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Expense</DialogTitle>
+          </DialogHeader>
+
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-title">Title</Label>
+              <Input
+                id="edit-title"
+                value={editForm.title}
+                onChange={(event) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    title: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-category">Category</Label>
+                <Select
+                  id="edit-category"
+                  value={editForm.category}
+                  onChange={(event) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      category: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="">Select category</option>
+                  {expenseCategories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-amount">Amount</Label>
+                <Input
+                  id="edit-amount"
+                  placeholder="$"
+                  value={editForm.amount}
+                  onChange={(event) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      amount: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-date">Date</Label>
+              <Input
+                id="edit-date"
+                type="date"
+                value={editForm.date}
+                onChange={(event) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    date: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-vendor">Vendor</Label>
+              <Input
+                id="edit-vendor"
+                value={editForm.vendor}
+                onChange={(event) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    vendor: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-vehicle">Vehicle</Label>
+              <Input
+                id="edit-vehicle"
+                value={editForm.vehicle}
+                onChange={(event) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    vehicle: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-receipt">Receipt</Label>
+              <Input
+                id="edit-receipt"
+                value={editForm.receipt}
+                onChange={(event) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    receipt: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setIsEditOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={handleSaveEdit}>
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isRecordOpen} onOpenChange={setIsRecordOpen}>
         <DialogContent className="max-w-2xl">
