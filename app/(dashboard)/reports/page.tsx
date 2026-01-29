@@ -33,7 +33,7 @@ export default function ReportsPage() {
   const outputRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useReactToPrint({
-    content: () => outputRef.current as any,
+    contentRef: outputRef,
     documentTitle: `${reportType} Report`,
   });
 
