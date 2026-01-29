@@ -136,6 +136,9 @@ export default function CustomerDetailPage() {
   const params = useParams();
   const customerId = params?.id?.toString();
   const mergeModal = useModal(false);
+  const editModal = useModal(false);
+  const deleteModal = useModal(false);
+  const duplicateModal = useModal(false);
   const customer = useMemo(
     () => customers.find((item) => item.id === customerId) ?? customers[0],
     [customerId],
@@ -157,8 +160,15 @@ export default function CustomerDetailPage() {
             <p className="text-sm text-muted">Customer Detail</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline">Edit</Button>
-            <Button variant="outline">Delete</Button>
+            <Button variant="outline" onClick={editModal.open}>
+              Edit
+            </Button>
+            <Button variant="outline" onClick={duplicateModal.open}>
+              Duplicate
+            </Button>
+            <Button variant="outline" onClick={deleteModal.open}>
+              Delete
+            </Button>
             <Button
               className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={mergeModal.open}
@@ -589,6 +599,84 @@ export default function CustomerDetailPage() {
             onClick={mergeModal.close}
           >
             Confirm Merge
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal isOpen={editModal.isOpen} onClose={editModal.close}>
+        <ModalHeader title="Edit Customer" />
+        <ModalBody className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Name</label>
+            <Input defaultValue={customer.name} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Phone</label>
+            <Input defaultValue={customer.phone} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Email</label>
+            <Input defaultValue={customer.email} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Address</label>
+            <Input defaultValue={customer.address} />
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={editModal.close}>
+            Cancel
+          </Button>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={editModal.close}
+          >
+            Save Changes
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Duplicate Modal */}
+      <Modal isOpen={duplicateModal.isOpen} onClose={duplicateModal.close}>
+        <ModalHeader title="Duplicate Customer" />
+        <ModalBody>
+          <p className="text-gray-700">
+            Are you sure you want to create a copy of this customer record? This
+            will create a new customer with the same details but with a new ID.
+          </p>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={duplicateModal.close}>
+            Cancel
+          </Button>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={duplicateModal.close}
+          >
+            Duplicate
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Delete Modal */}
+      <Modal isOpen={deleteModal.isOpen} onClose={deleteModal.close}>
+        <ModalHeader title="Delete Customer" />
+        <ModalBody>
+          <p className="text-gray-700">
+            Are you sure you want to delete <strong>{customer.name}</strong>?
+            This action cannot be undone and will remove all associated data.
+          </p>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={deleteModal.close}>
+            Cancel
+          </Button>
+          <Button
+            className="bg-red-600 hover:bg-red-700 text-white"
+            onClick={deleteModal.close}
+          >
+            Delete Customer
           </Button>
         </ModalFooter>
       </Modal>

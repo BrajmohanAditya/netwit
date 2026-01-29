@@ -282,7 +282,7 @@ export default function InvoicesPage() {
         id: invoice.id || invoice.invoice_number || `tmp-${index}`,
         invoiceNumber: invoice.invoice_number || "INV-0000",
         packageName: invoice.package_name || "Custom",
-        customer: invoice.customer?.full_name || "Unknown",
+        customer: invoice.customer?.name || "Unknown",
         date: formatDisplayDate(invoiceDate),
         dueDate: formatDisplayDate(dueDate),
         amount: Number(invoice.total ?? invoice.payment_amount ?? 0),

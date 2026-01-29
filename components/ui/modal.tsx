@@ -68,7 +68,7 @@ export function Modal({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
           className={cn(
-            "relative max-h-[calc(90vh-200px)] w-full max-w-[600px] rounded-xl bg-white shadow-lg transition-all duration-200",
+            "relative flex flex-col max-h-[85vh] w-full max-w-[600px] overflow-hidden rounded-xl bg-white shadow-lg transition-all duration-200",
             isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0",
           )}
           onClick={(e) => e.stopPropagation()}
@@ -118,7 +118,12 @@ interface ModalBodyProps {
 
 export function ModalBody({ children, className }: ModalBodyProps) {
   return (
-    <div className={cn("overflow-y-auto px-6 py-6 text-gray-700", className)}>
+    <div
+      className={cn(
+        "flex-1 overflow-y-auto px-6 py-6 text-gray-700",
+        className,
+      )}
+    >
       {children}
     </div>
   );

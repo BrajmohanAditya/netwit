@@ -16,7 +16,7 @@ export function useInvoices() {
         .select(
           `
           *,
-          customer:leads(id, full_name, phone, email)
+          customer:customers(id, name, phone, email)
         `,
         )
         .order("invoice_date", { ascending: false });
