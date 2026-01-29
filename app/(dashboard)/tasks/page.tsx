@@ -15,10 +15,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const tasks = [
+const initialTasks = [
   {
     id: "T-101",
     title: "Call John Smith",
+    description: "Follow up on financing options and schedule a visit.",
     assignedTo: "Ava Carter",
     priority: "High",
     status: "Pending",
@@ -27,6 +28,7 @@ const tasks = [
   {
     id: "T-102",
     title: "Prepare financing docs",
+    description: "Finalize credit application paperwork.",
     assignedTo: "Noah Reed",
     priority: "Urgent",
     status: "In Progress",
@@ -35,6 +37,7 @@ const tasks = [
   {
     id: "T-103",
     title: "Schedule delivery",
+    description: "Coordinate pickup date and confirm details.",
     assignedTo: "Emma Hart",
     priority: "Medium",
     status: "Pending",
@@ -43,6 +46,7 @@ const tasks = [
   {
     id: "T-104",
     title: "Update trade-in appraisal",
+    description: "Update appraisal with latest inspection notes.",
     assignedTo: "Mason Gray",
     priority: "Low",
     status: "Completed",
@@ -65,6 +69,9 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function TasksPage() {
+  const currentUser = "Ava Carter";
+  const teamMembers = ["Ava Carter", "Noah Reed", "Emma Hart", "Mason Gray"];
+  const [taskList, setTaskList] = useState(initialTasks);
   const [view, setView] = useState("My Tasks");
   const [filters, setFilters] = useState({
     assignedTo: "",
@@ -72,16 +79,111 @@ export default function TasksPage() {
     status: "",
     dueDate: "",
   });
-  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [taskDialogMode, setTaskDialogMode] = useState<"create" | "edit">(
+    "create",
+  );
+  const [taskForm, setTaskForm] = useState({
+    id: "",
+    title: "",
+    description: "",
+    assignedTo: "",
+    priority: "Medium",
+    status: "Pending",
+    dueDate: "",
+  });
+
+  const filteredTasks = useMemo(() => {
+    let data = taskList;
+
+    if (view === "My Tasks") {
+      data = data.filter((task) => task.assignedTo === currentUser);
+    }
+
+    if (view === "Team Tasks") {
+      data = data.filter((task) => teamMembers.includes(task.assignedTo));
+    }
+
+    if (filters.assignedTo) {
+      data = data.filter((task) => task.assignedTo === filters.assignedTo);
+    }
+
+    if (filters.priority) {
+      data = data.filter((task) => task.priority === filters.priority);
+    }
+
+    if (filters.status) {
+      data = data.filter((task) => task.status === filters.status);
+    }
+
+    if (filters.dueDate) {
+      data = data.filter((task) => task.dueDate === filters.dueDate);
+    }
+
+    return data;
+  }, [view, filters, currentUser, teamMembers, taskList]);
 
   const stats = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
     return {
-      pending: 12,
-      dueToday: 3,
-      overdue: 2,
-      completed: 45,
+      pending: filteredTasks.filter((task) => task.status === "Pending").length,
+      dueToday: filteredTasks.filter((task) => task.dueDate === today).length,
+      overdue: filteredTasks.filter(
+        (task) => task.dueDate < today && task.status !== "Completed",
+      ).length,
+      completed: filteredTasks.filter((task) => task.status === "Completed")
+        .length,
     };
-  }, []);
+  }, [filteredTasks]);
+
+  const getNextTaskId = () => {
+    const lastNumber = taskList
+      .map((task) => Number(task.id.replace("T-", "")))
+      .filter((value) => !Number.isNaN(value))
+      .sort((a, b) => b - a)[0];
+    const nextNumber = (lastNumber || 100) + 1;
+    return `T-${nextNumber}`;
+  };
+
+  const openCreateDialog = () => {
+    setTaskDialogMode("create");
+    setTaskForm({
+      id: "",
+      title: "",
+      description: "",
+      assignedTo: "",
+      priority: "Medium",
+      status: "Pending",
+      dueDate: "",
+    });
+    setIsTaskDialogOpen(true);
+  };
+
+  const openEditDialog = (task: (typeof taskList)[number]) => {
+    setTaskDialogMode("edit");
+    setTaskForm({ ...task });
+    setIsTaskDialogOpen(true);
+  };
+
+  const handleSaveTask = () => {
+    if (!taskForm.title.trim()) {
+      return;
+    }
+
+    if (taskDialogMode === "create") {
+      const newTask = {
+        ...taskForm,
+        id: getNextTaskId(),
+      };
+      setTaskList((prev) => [newTask, ...prev]);
+    } else {
+      setTaskList((prev) =>
+        prev.map((task) => (task.id === taskForm.id ? taskForm : task)),
+      );
+    }
+
+    setIsTaskDialogOpen(false);
+  };
 
   return (
     <div className="flex-1 space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8">
@@ -95,7 +197,7 @@ export default function TasksPage() {
         </div>
         <Button
           className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={() => setIsCreateTaskOpen(true)}
+          onClick={openCreateDialog}
         >
           + Create
         </Button>
@@ -240,55 +342,76 @@ export default function TasksPage() {
                 </tr>
               </thead>
               <tbody>
-                {tasks.map((task) => (
-                  <tr key={task.id} className="border-b border-gray-100">
-                    <td className="py-3 pr-2">
-                      <input type="checkbox" />
-                    </td>
-                    <td className="py-3 pr-4">
-                      <div className="font-medium text-heading">
-                        {task.title}
-                      </div>
-                      <div className="text-xs text-muted">{task.id}</div>
-                    </td>
-                    <td className="py-3 pr-4">{task.assignedTo}</td>
-                    <td className="py-3 pr-4">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          priorityStyles[task.priority]
-                        }`}
-                      >
-                        {task.priority}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          statusStyles[task.status]
-                        }`}
-                      >
-                        {task.status}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4">{task.dueDate}</td>
-                    <td className="py-3">
-                      <button className="text-blue-600 hover:text-blue-700 text-xs font-medium">
-                        Edit
-                      </button>
+                {filteredTasks.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="py-6 text-center text-sm text-muted"
+                    >
+                      No tasks match the selected view or filters.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredTasks.map((task) => (
+                    <tr key={task.id} className="border-b border-gray-100">
+                      <td className="py-3 pr-2">
+                        <input type="checkbox" />
+                      </td>
+                      <td className="py-3 pr-4">
+                        <div className="font-medium text-heading">
+                          {task.title}
+                        </div>
+                        <div className="text-xs text-muted">{task.id}</div>
+                      </td>
+                      <td className="py-3 pr-4">{task.assignedTo}</td>
+                      <td className="py-3 pr-4">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                            priorityStyles[task.priority]
+                          }`}
+                        >
+                          {task.priority}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-4">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                            statusStyles[task.status]
+                          }`}
+                        >
+                          {task.status}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-4">{task.dueDate}</td>
+                      <td className="py-3">
+                        <button
+                          className="text-blue-600 hover:text-blue-700 text-xs font-medium"
+                          onClick={() => openEditDialog(task)}
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
 
-      {/* Create Task Modal */}
-      <Dialog open={isCreateTaskOpen} onOpenChange={setIsCreateTaskOpen}>
+      {/* Create/Edit Task Modal */}
+      <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Create Task</DialogTitle>
+            <DialogTitle>
+              {taskDialogMode === "edit" ? "Edit Task" : "Create Task"}
+            </DialogTitle>
+            <DialogDescription>
+              {taskDialogMode === "edit"
+                ? "Update the task details below."
+                : "Add a new task to your list."}
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-6 py-4">
             <div className="space-y-2">
@@ -298,7 +421,17 @@ export default function TasksPage() {
               >
                 Title
               </Label>
-              <Input id="title" placeholder="Task title" />
+              <Input
+                id="title"
+                placeholder="Task title"
+                value={taskForm.title}
+                onChange={(event) =>
+                  setTaskForm((prev) => ({
+                    ...prev,
+                    title: event.target.value,
+                  }))
+                }
+              />
             </div>
 
             <div className="space-y-2">
@@ -313,6 +446,13 @@ export default function TasksPage() {
                 className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 rows={3}
                 placeholder="Task description"
+                value={taskForm.description}
+                onChange={(event) =>
+                  setTaskForm((prev) => ({
+                    ...prev,
+                    description: event.target.value,
+                  }))
+                }
               />
             </div>
 
@@ -323,10 +463,21 @@ export default function TasksPage() {
               >
                 Assign To
               </Label>
-              <Select id="assignTo">
+              <Select
+                id="assignTo"
+                value={taskForm.assignedTo}
+                onChange={(event) =>
+                  setTaskForm((prev) => ({
+                    ...prev,
+                    assignedTo: event.target.value,
+                  }))
+                }
+              >
                 <option value="">Select user</option>
                 <option value="Ava Carter">Ava Carter</option>
                 <option value="Noah Reed">Noah Reed</option>
+                <option value="Emma Hart">Emma Hart</option>
+                <option value="Mason Gray">Mason Gray</option>
               </Select>
             </div>
 
@@ -337,11 +488,44 @@ export default function TasksPage() {
               >
                 Priority
               </Label>
-              <Select id="priority">
+              <Select
+                id="priority"
+                value={taskForm.priority}
+                onChange={(event) =>
+                  setTaskForm((prev) => ({
+                    ...prev,
+                    priority: event.target.value,
+                  }))
+                }
+              >
                 <option value="Medium">Medium</option>
                 <option value="Urgent">Urgent</option>
                 <option value="High">High</option>
                 <option value="Low">Low</option>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="status"
+                className="text-sm font-semibold text-gray-700"
+              >
+                Status
+              </Label>
+              <Select
+                id="status"
+                value={taskForm.status}
+                onChange={(event) =>
+                  setTaskForm((prev) => ({
+                    ...prev,
+                    status: event.target.value,
+                  }))
+                }
+              >
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
               </Select>
             </div>
 
@@ -352,21 +536,32 @@ export default function TasksPage() {
               >
                 Due Date
               </Label>
-              <Input id="dueDate" type="date" placeholder="mm/dd/yyyy" />
+              <Input
+                id="dueDate"
+                type="date"
+                placeholder="mm/dd/yyyy"
+                value={taskForm.dueDate}
+                onChange={(event) =>
+                  setTaskForm((prev) => ({
+                    ...prev,
+                    dueDate: event.target.value,
+                  }))
+                }
+              />
             </div>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setIsCreateTaskOpen(false)}
+              onClick={() => setIsTaskDialogOpen(false)}
             >
               Cancel
             </Button>
             <Button
               className="bg-blue-600 hover:bg-blue-700 text-white"
-              onClick={() => setIsCreateTaskOpen(false)}
+              onClick={handleSaveTask}
             >
-              Create
+              {taskDialogMode === "edit" ? "Save" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>

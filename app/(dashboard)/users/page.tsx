@@ -118,6 +118,24 @@ const initials = (name: string) =>
     .slice(0, 2)
     .toUpperCase();
 
+const createEmptyUserForm = () => ({
+  avatar: "",
+  firstName: "",
+  lastName: "",
+  email: "",
+  role: "Sales Staff",
+  gender: "male",
+  status: "active",
+  permissions: {
+    viewInventory: true,
+    createLeads: true,
+    scheduleTestDrives: true,
+    editPricing: false,
+    deleteRecords: false,
+    viewReports: false,
+  },
+});
+
 export default function UsersPage() {
   const [filters, setFilters] = useState({
     search: "",
@@ -130,23 +148,31 @@ export default function UsersPage() {
     dateRange: "",
   });
   const [isUserOpen, setIsUserOpen] = useState(false);
-  const [userForm, setUserForm] = useState({
-    avatar: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    role: "Sales Staff",
-    gender: "male",
-    status: "active",
-    permissions: {
-      viewInventory: true,
-      createLeads: true,
-      scheduleTestDrives: true,
-      editPricing: false,
-      deleteRecords: false,
-      viewReports: false,
-    },
-  });
+  const [dialogMode, setDialogMode] = useState<"create" | "view" | "edit">(
+    "create",
+  );
+  const [userForm, setUserForm] = useState(createEmptyUserForm());
+
+  const getFormFromUser = (user: UserRow) => {
+    const [firstName, ...rest] = user.name.split(" ");
+    const lastName = rest.join(" ");
+    return {
+      ...createEmptyUserForm(),
+      firstName,
+      lastName,
+      email: user.email,
+      role: user.role,
+      status: user.status === "Active" ? "active" : "inactive",
+    };
+  };
+
+  const openUserDialog = (mode: "create" | "view" | "edit", user?: UserRow) => {
+    setDialogMode(mode);
+    setUserForm(user ? getFormFromUser(user) : createEmptyUserForm());
+    setIsUserOpen(true);
+  };
+
+  const isReadOnly = dialogMode === "view";
 
   return (
     <div className="flex-1 space-y-6 px-6 py-6">
@@ -159,7 +185,7 @@ export default function UsersPage() {
             <Button
               variant="primary"
               size="md"
-              onClick={() => setIsUserOpen(true)}
+              onClick={() => openUserDialog("create")}
             >
               <Plus className="mr-2 h-4 w-4" />
               Add User
@@ -249,10 +275,18 @@ export default function UsersPage() {
                   <TableCell>{user.lastLogin}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openUserDialog("view", user)}
+                      >
                         View
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openUserDialog("edit", user)}
+                      >
                         Edit
                       </Button>
                     </div>
@@ -387,8 +421,18 @@ export default function UsersPage() {
       <Dialog open={isUserOpen} onOpenChange={setIsUserOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>User Information</DialogTitle>
-            <DialogDescription>Add or edit a user profile.</DialogDescription>
+            <DialogTitle>
+              {dialogMode === "view"
+                ? "User Details"
+                : dialogMode === "edit"
+                  ? "Edit User"
+                  : "Add User"}
+            </DialogTitle>
+            <DialogDescription>
+              {dialogMode === "view"
+                ? "Review user profile details."
+                : "Add or edit a user profile."}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4">
@@ -397,6 +441,7 @@ export default function UsersPage() {
               <Input
                 id="user-avatar"
                 type="file"
+                disabled={isReadOnly}
                 onChange={(event) =>
                   setUserForm((prev) => ({
                     ...prev,
@@ -412,6 +457,7 @@ export default function UsersPage() {
                 <Input
                   id="user-first"
                   value={userForm.firstName}
+                  disabled={isReadOnly}
                   onChange={(event) =>
                     setUserForm((prev) => ({
                       ...prev,
@@ -425,6 +471,7 @@ export default function UsersPage() {
                 <Input
                   id="user-last"
                   value={userForm.lastName}
+                  disabled={isReadOnly}
                   onChange={(event) =>
                     setUserForm((prev) => ({
                       ...prev,
@@ -440,6 +487,7 @@ export default function UsersPage() {
               <Input
                 id="user-email"
                 value={userForm.email}
+                disabled={isReadOnly}
                 onChange={(event) =>
                   setUserForm((prev) => ({
                     ...prev,
@@ -454,6 +502,7 @@ export default function UsersPage() {
               <Select
                 id="user-role"
                 value={userForm.role}
+                disabled={isReadOnly}
                 onChange={(event) =>
                   setUserForm((prev) => ({
                     ...prev,
@@ -484,6 +533,7 @@ export default function UsersPage() {
                       name="gender"
                       value={option.value}
                       checked={userForm.gender === option.value}
+                      disabled={isReadOnly}
                       onChange={(event) =>
                         setUserForm((prev) => ({
                           ...prev,
@@ -510,6 +560,7 @@ export default function UsersPage() {
                       name="status"
                       value={option.value}
                       checked={userForm.status === option.value}
+                      disabled={isReadOnly}
                       onChange={(event) =>
                         setUserForm((prev) => ({
                           ...prev,
@@ -529,6 +580,7 @@ export default function UsersPage() {
                 <label className="flex items-center gap-2">
                   <Checkbox
                     checked={userForm.permissions.viewInventory}
+                    disabled={isReadOnly}
                     onChange={(event) =>
                       setUserForm((prev) => ({
                         ...prev,
@@ -544,6 +596,7 @@ export default function UsersPage() {
                 <label className="flex items-center gap-2">
                   <Checkbox
                     checked={userForm.permissions.createLeads}
+                    disabled={isReadOnly}
                     onChange={(event) =>
                       setUserForm((prev) => ({
                         ...prev,
@@ -559,6 +612,7 @@ export default function UsersPage() {
                 <label className="flex items-center gap-2">
                   <Checkbox
                     checked={userForm.permissions.scheduleTestDrives}
+                    disabled={isReadOnly}
                     onChange={(event) =>
                       setUserForm((prev) => ({
                         ...prev,
@@ -574,6 +628,7 @@ export default function UsersPage() {
                 <label className="flex items-center gap-2">
                   <Checkbox
                     checked={userForm.permissions.editPricing}
+                    disabled={isReadOnly}
                     onChange={(event) =>
                       setUserForm((prev) => ({
                         ...prev,
@@ -589,6 +644,7 @@ export default function UsersPage() {
                 <label className="flex items-center gap-2">
                   <Checkbox
                     checked={userForm.permissions.deleteRecords}
+                    disabled={isReadOnly}
                     onChange={(event) =>
                       setUserForm((prev) => ({
                         ...prev,
@@ -604,6 +660,7 @@ export default function UsersPage() {
                 <label className="flex items-center gap-2">
                   <Checkbox
                     checked={userForm.permissions.viewReports}
+                    disabled={isReadOnly}
                     onChange={(event) =>
                       setUserForm((prev) => ({
                         ...prev,
@@ -621,11 +678,13 @@ export default function UsersPage() {
 
             <div className="flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setIsUserOpen(false)}>
-                Cancel
+                {isReadOnly ? "Close" : "Cancel"}
               </Button>
-              <Button variant="primary" onClick={() => setIsUserOpen(false)}>
-                Save
-              </Button>
+              {!isReadOnly && (
+                <Button variant="primary" onClick={() => setIsUserOpen(false)}>
+                  Save
+                </Button>
+              )}
             </div>
           </div>
         </DialogContent>
