@@ -77,17 +77,17 @@ export default function InvoicesPage() {
   const detailRef = useRef<HTMLDivElement>(null);
 
   const handlePrintTable = useReactToPrint({
-    content: () => tableRef.current as any,
+    contentRef: tableRef,
     documentTitle: "Invoices List",
   });
 
   const handlePrintSelectedList = useReactToPrint({
-    content: () => selectedRef.current as any,
+    contentRef: selectedRef,
     documentTitle: "Selected Invoices",
   });
 
   const handlePrintDetail = useReactToPrint({
-    content: () => detailRef.current as any,
+    contentRef: detailRef,
     documentTitle: "Invoice #INV-001",
   });
 
