@@ -54,6 +54,8 @@ const initialTasks = [
   },
 ];
 
+const teamMembers = ["Ava Carter", "Noah Reed", "Emma Hart", "Mason Gray"];
+
 const priorityStyles: Record<string, string> = {
   Urgent: "bg-red-100 text-red-700",
   High: "bg-orange-100 text-orange-700",
@@ -70,7 +72,6 @@ const statusStyles: Record<string, string> = {
 
 export default function TasksPage() {
   const currentUser = "Ava Carter";
-  const teamMembers = ["Ava Carter", "Noah Reed", "Emma Hart", "Mason Gray"];
   const [taskList, setTaskList] = useState(initialTasks);
   const [view, setView] = useState("My Tasks");
   const [filters, setFilters] = useState({
@@ -121,7 +122,7 @@ export default function TasksPage() {
     }
 
     return data;
-  }, [view, filters, currentUser, teamMembers, taskList]);
+  }, [view, filters, currentUser, taskList]);
 
   const stats = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -209,11 +210,10 @@ export default function TasksPage() {
           <button
             key={label}
             onClick={() => setView(label)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-              view === label
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-            }`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${view === label
+              ? "bg-blue-600 text-white border-blue-600"
+              : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              }`}
           >
             {label}
           </button>
@@ -366,18 +366,16 @@ export default function TasksPage() {
                       <td className="py-3 pr-4">{task.assignedTo}</td>
                       <td className="py-3 pr-4">
                         <span
-                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                            priorityStyles[task.priority]
-                          }`}
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${priorityStyles[task.priority]
+                            }`}
                         >
                           {task.priority}
                         </span>
                       </td>
                       <td className="py-3 pr-4">
                         <span
-                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                            statusStyles[task.status]
-                          }`}
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${statusStyles[task.status]
+                            }`}
                         >
                           {task.status}
                         </span>
@@ -402,7 +400,7 @@ export default function TasksPage() {
 
       {/* Create/Edit Task Modal */}
       <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {taskDialogMode === "edit" ? "Edit Task" : "Create Task"}

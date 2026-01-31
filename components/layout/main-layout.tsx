@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { Navbar } from "./navbar";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,15 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const mainRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+
+  // Scroll to top of main content on route change
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+  }, [pathname]);
 
   return (
     <div className="h-screen flex flex-col relative">
@@ -51,7 +61,10 @@ export function MainLayout({ children }: MainLayoutProps) {
           </header>
 
           {/* Scrollable Main Content */}
-          <main className="layout-main bg-white overflow-y-auto flex-1 mt-header p-4 sm:p-6 md:p-8">
+          <main
+            ref={mainRef}
+            className="layout-main bg-white overflow-y-auto flex-1 mt-header p-4 sm:p-6 md:p-8"
+          >
             <div className="transition-smooth animate-in fade-in slide-in-from-bottom duration-300">
               {children}
             </div>

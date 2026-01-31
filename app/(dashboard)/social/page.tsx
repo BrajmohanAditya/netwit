@@ -394,9 +394,8 @@ export default function SocialPostingPage() {
                     <td className="py-3 pr-4 text-gray-700">{post.platform}</td>
                     <td className="py-3 pr-4">
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
-                          statusBadgeStyles[post.status]
-                        }`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${statusBadgeStyles[post.status]
+                          }`}
                       >
                         {post.status}
                       </span>
@@ -431,7 +430,7 @@ export default function SocialPostingPage() {
       </Card>
 
       <Dialog open={isCreateEventOpen} onOpenChange={setIsCreateEventOpen}>
-        <DialogContent className="sm:max-w-[700px]">
+        <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create Event</DialogTitle>
             <DialogDescription>
@@ -692,7 +691,7 @@ export default function SocialPostingPage() {
         open={isPostToFacebookOpen}
         onOpenChange={setIsPostToFacebookOpen}
       >
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Post to Facebook</DialogTitle>
           </DialogHeader>

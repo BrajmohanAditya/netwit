@@ -152,15 +152,15 @@ export default function ExpensesPage() {
       prev.map((expense) =>
         expense.id === selectedExpense.id
           ? {
-              ...expense,
-              title: editForm.title,
-              category: editForm.category,
-              amount: Number.isNaN(parsedAmount) ? 0 : parsedAmount,
-              date: editForm.date || expense.date,
-              vendor: editForm.vendor,
-              vehicle: editForm.vehicle,
-              receipt: editForm.receipt,
-            }
+            ...expense,
+            title: editForm.title,
+            category: editForm.category,
+            amount: Number.isNaN(parsedAmount) ? 0 : parsedAmount,
+            date: editForm.date || expense.date,
+            vendor: editForm.vendor,
+            vehicle: editForm.vehicle,
+            receipt: editForm.receipt,
+          }
           : expense,
       ),
     );
@@ -310,7 +310,7 @@ export default function ExpensesPage() {
       </Card>
 
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Expense Details</DialogTitle>
           </DialogHeader>
@@ -350,7 +350,7 @@ export default function ExpensesPage() {
       </Dialog>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Expense</DialogTitle>
           </DialogHeader>
@@ -477,7 +477,7 @@ export default function ExpensesPage() {
       </Dialog>
 
       <Dialog open={isRecordOpen} onOpenChange={setIsRecordOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Record Expense</DialogTitle>
             <DialogDescription>Add a new expense entry.</DialogDescription>

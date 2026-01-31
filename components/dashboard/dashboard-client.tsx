@@ -24,9 +24,19 @@ import { Select } from "@/components/ui/select";
 import { LayoutDashboard, TrendingUp, Sparkles, RefreshCw } from "lucide-react";
 import { DashboardMetrics } from "@/lib/services/dashboard.service";
 
+interface RecentLead {
+  id: string;
+  status: string;
+  created_at: string;
+  customer: {
+    name: string;
+    phone?: string;
+  };
+}
+
 interface DashboardClientProps {
   metrics: DashboardMetrics;
-  recentLeads: any[];
+  recentLeads: RecentLead[];
 }
 
 export function DashboardClient({

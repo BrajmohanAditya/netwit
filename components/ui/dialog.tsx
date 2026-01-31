@@ -1,4 +1,7 @@
+"use client";
+
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 
@@ -17,15 +20,21 @@ const DialogContext = React.createContext<{
   onOpenChange: (open: boolean) => void;
 }>({
   open: false,
-  onOpenChange: () => {},
+  onOpenChange: () => { },
 });
 
 export function Dialog({ open = false, onOpenChange, children }: DialogProps) {
   const [internalOpen, setInternalOpen] = React.useState(open);
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setInternalOpen(open);
   }, [open]);
+
+  React.useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   const handleOpenChange = React.useCallback(
     (newOpen: boolean) => {
@@ -35,20 +44,22 @@ export function Dialog({ open = false, onOpenChange, children }: DialogProps) {
     [onOpenChange],
   );
 
+  if (!mounted) return null;
   if (!internalOpen) return null;
 
-  return (
+  return createPortal(
     <DialogContext.Provider
       value={{ open: internalOpen, onOpenChange: handleOpenChange }}
     >
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center sm:items-center">
         <div
-          className="fixed inset-0 bg-black/50"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in"
           onClick={() => handleOpenChange(false)}
         />
         {children}
       </div>
-    </DialogContext.Provider>
+    </DialogContext.Provider>,
+    document.body,
   );
 }
 
