@@ -15,7 +15,7 @@ interface RecentLead {
   id: string;
   customer?: {
     name: string;
-    phone: string;
+    phone?: string;
   };
   status: string;
   created_at: string;
