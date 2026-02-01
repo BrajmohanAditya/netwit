@@ -1,4 +1,5 @@
 import { DashboardClient } from "@/components/dashboard/dashboard-client";
+export const dynamic = "force-dynamic";
 import { fetchDashboardMetrics } from "@/lib/services/dashboard.service";
 import { getRecentLeads } from "@/lib/actions/dashboard-stats";
 
