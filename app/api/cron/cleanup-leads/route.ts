@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const supabase = await createClient();
-    
+
     // Calculate date 30 days ago
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Update status to 'lost'
-    const leadIds = staleLeads.map(lead => lead.id);
+    const leadIds = staleLeads.map((lead: any) => lead.id);
     const { error: updateError } = await supabase
       .from('leads')
       .update({ status: 'Lost' })

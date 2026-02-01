@@ -139,9 +139,9 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
     const leadsChange =
       yesterdaysLeadsCount > 0
         ? Math.round(
-            ((todaysLeadsCount - yesterdaysLeadsCount) / yesterdaysLeadsCount) *
-              100,
-          )
+          ((todaysLeadsCount - yesterdaysLeadsCount) / yesterdaysLeadsCount) *
+          100,
+        )
         : 0;
 
     const newInventoryCount = newVehicles?.length || 0;
@@ -149,10 +149,10 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
     const newInventoryChange =
       lastWeekInventoryCount > 0
         ? Math.round(
-            ((newInventoryCount - lastWeekInventoryCount) /
-              lastWeekInventoryCount) *
-              100,
-          )
+          ((newInventoryCount - lastWeekInventoryCount) /
+            lastWeekInventoryCount) *
+          100,
+        )
         : 0;
 
     const activeDealsCount = activeDealsData?.length || 0;
@@ -160,14 +160,14 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
     const activeDealsChange =
       lastPeriodDealsCount > 0
         ? Math.round(
-            ((activeDealsCount - lastPeriodDealsCount) / lastPeriodDealsCount) *
-              100,
-          )
+          ((activeDealsCount - lastPeriodDealsCount) / lastPeriodDealsCount) *
+          100,
+        )
         : 0;
 
     const pipelineValue =
       activeDealsData?.reduce(
-        (sum, deal) => sum + (deal.expected_value || 0),
+        (sum: any, deal: any) => sum + (deal.expected_value || 0),
         0,
       ) || 0;
 
@@ -176,15 +176,15 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
     const dealsClosedMonthChange =
       lastMonthDealsCount > 0
         ? Math.round(
-            ((dealsClosedMonthCount - lastMonthDealsCount) /
-              lastMonthDealsCount) *
-              100,
-          )
+          ((dealsClosedMonthCount - lastMonthDealsCount) /
+            lastMonthDealsCount) *
+          100,
+        )
         : 0;
 
     const revenueMonth =
       dealsClosedData?.reduce(
-        (sum, deal) => sum + (deal.final_value || 0),
+        (sum: any, deal: any) => sum + (deal.final_value || 0),
         0,
       ) || 0;
 

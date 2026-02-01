@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
-  FormControl, 
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
@@ -96,7 +96,7 @@ export default function NewInvoicePage() {
     });
   };
 
-  const activeVehicles = vehicles?.filter((v) => v.status === "Active") || [];
+  const activeVehicles = vehicles?.filter((v: any) => v.status === "Active") || [];
 
   return (
     <div className="p-6">
@@ -215,13 +215,13 @@ export default function NewInvoicePage() {
                       value={selectedCustomer?.id || ""}
                       onChange={(e) => {
                         const customer = leads?.find(
-                          (l) => l.id === e.target.value,
+                          (l: any) => l.id === e.target.value,
                         );
                         setSelectedCustomer(customer);
                       }}
                     >
                       <option value="">Select a customer</option>
-                      {leads?.map((lead) => (
+                      {leads?.map((lead: any) => (
                         <option key={lead.id} value={lead.id}>
                           {lead.full_name} - {lead.phone}
                         </option>
@@ -238,7 +238,7 @@ export default function NewInvoicePage() {
                       value={selectedVehicle?.id || ""}
                       onChange={(e) => {
                         const vehicle = activeVehicles.find(
-                          (v) => v.id === e.target.value,
+                          (v: any) => v.id === e.target.value,
                         );
                         setSelectedVehicle(vehicle);
                         if (vehicle) {
@@ -251,7 +251,7 @@ export default function NewInvoicePage() {
                       }}
                     >
                       <option value="">Select a vehicle</option>
-                      {activeVehicles.map((vehicle) => (
+                      {activeVehicles.map((vehicle: any) => (
                         <option key={vehicle.id} value={vehicle.id}>
                           {vehicle.year} {vehicle.make} {vehicle.model} -{" "}
                           {vehicle.vin?.slice(-6)}
@@ -440,17 +440,17 @@ export default function NewInvoicePage() {
                 vehicleInfo={
                   selectedVehicle
                     ? {
-                        year: selectedVehicle.year,
-                        make: selectedVehicle.make,
-                        model: selectedVehicle.model,
-                        vin: selectedVehicle.vin,
-                        odometer: selectedVehicle.odometer,
-                      }
+                      year: selectedVehicle.year,
+                      make: selectedVehicle.make,
+                      model: selectedVehicle.model,
+                      vin: selectedVehicle.vin,
+                      odometer: selectedVehicle.odometer,
+                    }
                     : undefined
                 }
                 calculation={calculator.calculation}
                 packageName={packageName}
-                lineItems={calculator.lineItems.map((item) => ({
+                lineItems={calculator.lineItems.map((item: any) => ({
                   description: item.description,
                   quantity: item.quantity,
                   unit_price: item.unit_price,

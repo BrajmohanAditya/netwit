@@ -22,7 +22,7 @@ export default function LeadDetailPage() {
   const params = useParams();
   const leadId = params.id as string;
   const { data: leads } = useLeads();
-  const lead = leads?.find((l) => l.id === leadId);
+  const lead = leads?.find((l: any) => l.id === leadId);
   const queryClient = useQueryClient();
 
   const [message, setMessage] = useState("");
@@ -151,11 +151,10 @@ export default function LeadDetailPage() {
                       className={`flex ${interaction.direction === "outbound" ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-lg p-3 ${
-                          interaction.direction === "outbound"
+                        className={`max-w-[80%] rounded-lg p-3 ${interaction.direction === "outbound"
                             ? "bg-teal-600 text-white"
                             : "bg-slate-100 text-slate-800"
-                        }`}
+                          }`}
                       >
                         <p className="text-sm whitespace-pre-wrap">
                           {interaction.content}
