@@ -4,17 +4,17 @@ import { getFinancialTransactions } from '@/lib/actions/financials';
 
 export default async function FinancialsPage() {
   const transactions = await getFinancialTransactions();
-  
+
   return (
     <div className="p-6">
-      <PageHeader 
-        title="Financial Ledger" 
-        action={{ 
-          label: 'Add Transaction', 
-          onClick: () => console.log('Add transaction')
+      <PageHeader
+        title="Financial Ledger"
+        action={{
+          label: 'Add Transaction',
+          // onClick handler removed as it cannot be passed from Server Component
         }}
       />
-      
+
       <div className="mt-6">
         <LedgerTable transactions={transactions} />
       </div>

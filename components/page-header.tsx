@@ -6,7 +6,7 @@ interface PageHeaderProps {
   title: string;
   action?: {
     label: string;
-    onClick: () => void;
+    onClick?: () => void;
     icon?: React.ReactNode;
   };
 }
