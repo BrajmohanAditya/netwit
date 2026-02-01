@@ -56,6 +56,8 @@ export const viewport: Viewport = {
   ],
 };
 
+import { ConvexClientProvider } from "@/components/convex-client-provider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -64,10 +66,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} overflow-hidden`}>
-        <QueryProvider>
-          {children}
-          <Toaster position="top-right" />
-        </QueryProvider>
+        <ConvexClientProvider>
+          <QueryProvider>
+            {children}
+            <Toaster position="top-right" />
+          </QueryProvider>
+        </ConvexClientProvider>
       </body>
     </html>
   );

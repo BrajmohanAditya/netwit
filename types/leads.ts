@@ -14,6 +14,10 @@ export type LeadFormData = z.infer<typeof leadSchema>;
 export interface Lead {
   id: string;
   customer_id: string | null;
+  name: string;
+  email?: string;
+  phone?: string;
+  company?: string;
   source: string;
   status: string;
   interest_vehicle_id: string | null;

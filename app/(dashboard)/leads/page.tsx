@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Mail, MoreHorizontal, Phone, Plus } from "lucide-react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import type { Lead } from "@/types/leads";
 
 import { PageHeader } from "@/components/page-header";
@@ -31,62 +33,6 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-// Mock data - Replace with actual data from Supabase
-const mockLeads: Lead[] = [
-  {
-    id: "1",
-    customer_id: "1",
-    source: "Craigslist",
-    status: "In Progress",
-    interest_vehicle_id: "1",
-    assigned_to: null,
-    notes: "Interested in Honda Civic",
-    lead_creation_date: new Date().toISOString(),
-    last_engagement: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    customer_id: "2",
-    source: "Kijiji",
-    status: "Qualified",
-    interest_vehicle_id: null,
-    assigned_to: null,
-    notes: null,
-    lead_creation_date: new Date().toISOString(),
-    last_engagement: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "3",
-    customer_id: "3",
-    source: "Website",
-    status: "Not Started",
-    interest_vehicle_id: null,
-    assigned_to: null,
-    notes: "Requesting quote for Ford F-150",
-    lead_creation_date: new Date().toISOString(),
-    last_engagement: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "4",
-    customer_id: "4",
-    source: "Referral",
-    status: "Closed",
-    interest_vehicle_id: "2",
-    assigned_to: null,
-    notes: "Purchased 2020 Toyota Camry",
-    lead_creation_date: new Date().toISOString(),
-    last_engagement: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
 const kanbanStatuses = [
   "Not Started",
   "In Progress",
@@ -97,67 +43,71 @@ const kanbanStatuses = [
   "Converted",
 ];
 
-const leadCardDetails: Record<
-  string,
-  {
-    name: string;
-    phone: string;
-    sourceLabel: string;
-    vehicleLabel?: string;
-    assignedTo?: string;
-    createdLabel?: string;
-    priority?: "high" | "medium" | "low";
-  }
-> = {
-  "1": {
-    name: "John Smith",
-    phone: "604-123-4567",
-    sourceLabel: "Website",
-    vehicleLabel: "2021 Ford F-150",
-    assignedTo: "Agam Chawla",
-    createdLabel: "2 days ago",
-    priority: "high",
-  },
-  "2": {
-    name: "Mia Patel",
-    phone: "604-555-9182",
-    sourceLabel: "Referral",
-    vehicleLabel: "2019 Honda Civic",
-    assignedTo: "Kyle Pierce",
-    createdLabel: "5 hours ago",
-    priority: "medium",
-  },
-  "3": {
-    name: "Leo Garcia",
-    phone: "604-444-2231",
-    sourceLabel: "Website",
-    vehicleLabel: "2020 Toyota RAV4",
-    assignedTo: "Unassigned",
-    createdLabel: "Today",
-    priority: "low",
-  },
-  "4": {
-    name: "Sofia Chen",
-    phone: "604-777-0091",
-    sourceLabel: "Referral",
-    vehicleLabel: "2020 Toyota Camry",
-    assignedTo: "Amy Richards",
-    createdLabel: "Yesterday",
-    priority: "medium",
-  },
-};
-
 export default function LeadsPage() {
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
-  const [leads] = useState<Lead[]>(mockLeads);
+  // const [leads] = useState<Lead[]>(mockLeads); // Removed mock data state
+  const rawLeads = useQuery(api.leads.get);
+  const createLead = useMutation(api.leads.create);
+
+  const leads: Lead[] = (rawLeads || []).map(l => ({
+    ...l,
+    id: l._id,
+    name: l.name,
+    interest_vehicle_id: null,
+    assigned_to: l.assigned_to || null,
+    notes: l.notes || null,
+    customer_id: l.customer_id || null,
+    email: l.email,
+    phone: l.phone,
+    company: l.company,
+  }));
+
   const [editingLeadId, setEditingLeadId] = useState<string | null>(null);
   const [editedNames, setEditedNames] = useState<Record<string, string>>({});
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
 
+  // New Lead Form State
+  const [newLeadName, setNewLeadName] = useState("");
+  const [newLeadEmail, setNewLeadEmail] = useState("");
+  const [newLeadPhone, setNewLeadPhone] = useState("");
+  const [newLeadCompany, setNewLeadCompany] = useState("");
+  const [newLeadSource, setNewLeadSource] = useState("Website");
+  const [newLeadStatus, setNewLeadStatus] = useState("Not Started");
+  const [newLeadAssigned, setNewLeadAssigned] = useState("Unassigned");
+  const [newLeadVehicle, setNewLeadVehicle] = useState("");
+  const [newLeadSourceDetails, setNewLeadSourceDetails] = useState("");
+  const [newLeadNotes, setNewLeadNotes] = useState("");
+
   const handleNewLead = () => {
+    setNewLeadName("");
+    setNewLeadEmail("");
+    setNewLeadPhone("");
+    setNewLeadCompany("");
+    setNewLeadSource("Website");
+    setNewLeadStatus("Not Started");
+    setNewLeadAssigned("Unassigned");
+    setNewLeadVehicle("");
+    setNewLeadSourceDetails("");
+    setNewLeadNotes("");
     setIsNewLeadOpen(true);
+  };
+
+  const handleCreateLead = async () => {
+    await createLead({
+      name: newLeadName,
+      email: newLeadEmail,
+      phone: newLeadPhone,
+      company: newLeadCompany,
+      source: newLeadSource,
+      status: newLeadStatus,
+      assignedTo: newLeadAssigned === "Unassigned" ? undefined : newLeadAssigned,
+      vehicleInterest: newLeadVehicle,
+      sourceDetails: newLeadSourceDetails,
+      notes: newLeadNotes,
+    });
+    setIsNewLeadOpen(false);
   };
 
   const openLeadDetails = (leadId: string) => {
@@ -166,12 +116,19 @@ export default function LeadsPage() {
   };
 
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId) || null;
-  const selectedDetails = selectedLeadId
+  // Dynamic details derived from the lead object itself now
+  const selectedDetails = selectedLead
     ? {
-        ...leadCardDetails[selectedLeadId],
-        email: "contact@example.com",
-        company: "Adaptus Auto",
-      }
+      name: selectedLead.name,
+      phone: selectedLead.phone || "N/A",
+      sourceLabel: selectedLead.source,
+      vehicleLabel: selectedLead.interest_vehicle_id ? "Vehicle Interest" : "Vehicle TBD",
+      assignedTo: selectedLead.assigned_to || "Unassigned",
+      createdLabel: new Date(selectedLead.created_at).toLocaleDateString(),
+      priority: "medium" as const, // Defaulting for now
+      email: selectedLead.email || "N/A",
+      company: selectedLead.company || "Adaptus Auto",
+    }
     : undefined;
 
   return (
@@ -195,27 +152,27 @@ export default function LeadsPage() {
           </DialogHeader>
           <div className="grid gap-4">
             <div className="grid gap-3 md:grid-cols-2">
-              <Input placeholder="Full name" />
-              <Input placeholder="Email" type="email" />
-              <Input placeholder="Phone" type="tel" />
-              <Input placeholder="Company (optional)" />
+              <Input placeholder="Full name" value={newLeadName} onChange={(e) => setNewLeadName(e.target.value)} />
+              <Input placeholder="Email" type="email" value={newLeadEmail} onChange={(e) => setNewLeadEmail(e.target.value)} />
+              <Input placeholder="Phone" type="tel" value={newLeadPhone} onChange={(e) => setNewLeadPhone(e.target.value)} />
+              <Input placeholder="Company (optional)" value={newLeadCompany} onChange={(e) => setNewLeadCompany(e.target.value)} />
             </div>
             <div className="grid gap-3 md:grid-cols-3">
-              <Select defaultValue="Website">
+              <Select value={newLeadSource} onChange={(e) => setNewLeadSource(e.target.value)}>
                 <option value="Website">Website</option>
                 <option value="Referral">Referral</option>
                 <option value="Walk-in">Walk-in</option>
                 <option value="Phone">Phone</option>
                 <option value="Marketplace">Marketplace</option>
               </Select>
-              <Select defaultValue="Not Started">
+              <Select value={newLeadStatus} onChange={(e) => setNewLeadStatus(e.target.value)}>
                 {kanbanStatuses.map((status) => (
                   <option key={status} value={status}>
                     {status}
                   </option>
                 ))}
               </Select>
-              <Select defaultValue="Unassigned">
+              <Select value={newLeadAssigned} onChange={(e) => setNewLeadAssigned(e.target.value)}>
                 <option value="Unassigned">Unassigned</option>
                 <option value="Agam Chawla">Agam Chawla</option>
                 <option value="Kyle Pierce">Kyle Pierce</option>
@@ -223,16 +180,16 @@ export default function LeadsPage() {
               </Select>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
-              <Input placeholder="Vehicle interest" />
-              <Input placeholder="Lead source details" />
+              <Input placeholder="Vehicle interest" value={newLeadVehicle} onChange={(e) => setNewLeadVehicle(e.target.value)} />
+              <Input placeholder="Lead source details" value={newLeadSourceDetails} onChange={(e) => setNewLeadSourceDetails(e.target.value)} />
             </div>
-            <Input placeholder="Notes" />
+            <Input placeholder="Notes" value={newLeadNotes} onChange={(e) => setNewLeadNotes(e.target.value)} />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setIsNewLeadOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => setIsNewLeadOpen(false)}>Create Lead</Button>
+            <Button onClick={handleCreateLead}>Create Lead</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -268,16 +225,15 @@ export default function LeadsPage() {
                 </TableHeader>
                 <TableBody>
                   {leads.map((lead) => {
-                    const details = leadCardDetails[lead.id] || {
-                      name: `Lead ${lead.id}`,
-                      phone: "604-000-0000",
+                    // Adapt the lead object for display
+                    const details = {
+                      name: lead.name,
+                      phone: lead.phone || "N/A",
                       sourceLabel: lead.source,
                       vehicleLabel: "Vehicle TBD",
-                      assignedTo: "Unassigned",
-                      createdLabel: new Date(
-                        lead.lead_creation_date,
-                      ).toLocaleDateString(),
-                      priority: "low" as const,
+                      assignedTo: lead.assigned_to || "Unassigned",
+                      createdLabel: new Date(lead.created_at).toLocaleDateString(),
+                      priority: "low" as const
                     };
 
                     const isOverdue = lead.id === "1";
@@ -468,16 +424,14 @@ export default function LeadsPage() {
                       {leads
                         .filter((l) => l.status === status)
                         .map((lead) => {
-                          const details = leadCardDetails[lead.id] || {
-                            name: `Lead ${lead.id}`,
-                            phone: "604-000-0000",
+                          const details = {
+                            name: lead.name,
+                            phone: lead.phone || "N/A",
                             sourceLabel: lead.source,
                             vehicleLabel: "Vehicle TBD",
-                            assignedTo: "Unassigned",
-                            createdLabel: new Date(
-                              lead.lead_creation_date,
-                            ).toLocaleDateString(),
-                            priority: "low" as const,
+                            assignedTo: lead.assigned_to || "Unassigned",
+                            createdLabel: new Date(lead.created_at).toLocaleDateString(),
+                            priority: "low" as const
                           };
 
                           return (
