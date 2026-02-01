@@ -13,8 +13,6 @@
   "dependencies": {
     "@ai-sdk/openai": "^3.0.7",
     "@hookform/resolvers": "^3.3.4",
-    "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.39.0",
     "@tanstack/react-query": "^5.17.0",
     "@tanstack/react-table": "^8.21.3",
     "ai": "^6.0.27",

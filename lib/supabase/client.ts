@@ -1,20 +1,51 @@
-import { createBrowserClient } from '@supabase/ssr';
+const mockQueryBuilder = {
+  select: () => mockQueryBuilder,
+  insert: () => mockQueryBuilder,
+  update: () => mockQueryBuilder,
+  delete: () => mockQueryBuilder,
+  upsert: () => mockQueryBuilder,
+  eq: () => mockQueryBuilder,
+  neq: () => mockQueryBuilder,
+  gt: () => mockQueryBuilder,
+  lt: () => mockQueryBuilder,
+  gte: () => mockQueryBuilder,
+  lte: () => mockQueryBuilder,
+  in: () => mockQueryBuilder,
+  like: () => mockQueryBuilder,
+  ilike: () => mockQueryBuilder,
+  is: () => mockQueryBuilder,
+  range: () => mockQueryBuilder,
+  single: () => Promise.resolve({ data: null, error: null }),
+  maybeSingle: () => Promise.resolve({ data: null, error: null }),
+  order: () => mockQueryBuilder,
+  limit: () => mockQueryBuilder,
+  // Make it awaitable returning empty array by default
+  then: (resolve: any) => resolve({ data: [], error: null }),
+} as any;
+
+const mockClient = {
+  from: () => mockQueryBuilder,
+  auth: {
+    getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    signInWithPassword: () => Promise.resolve({ data: {}, error: null }),
+    signInWithOAuth: () => Promise.resolve({ data: {}, error: null }),
+    signOut: () => Promise.resolve({ error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
+    signUp: () => Promise.resolve({ data: {}, error: null }),
+    resetPasswordForEmail: () => Promise.resolve({ data: {}, error: null }),
+  },
+  storage: {
+    from: () => ({
+      upload: () => Promise.resolve({ data: { path: "mock-path" }, error: null }),
+      download: () => Promise.resolve({ data: new Blob(), error: null }),
+      remove: () => Promise.resolve({ data: {}, error: null }),
+      list: () => Promise.resolve({ data: [], error: null }),
+      getPublicUrl: (path: string) => ({ data: { publicUrl: `https://mock.com/${path}` } }),
+    }),
+  },
+} as any;
 
 export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-      'Missing Supabase environment variables. Please create a .env.local file with:\n' +
-      'NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url\n' +
-      'NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key\n\n' +
-      'Get these values from: https://supabase.com/dashboard/project/_/settings/api'
-    );
-  }
-
-  return createBrowserClient(
-    supabaseUrl,
-    supabaseAnonKey
-  );
+  return mockClient;
 }
