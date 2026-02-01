@@ -19,6 +19,7 @@ export interface Lead {
   phone?: string;
   company?: string;
   source: string;
+  source_details?: string;
   status: string;
   interest_vehicle_id: string | null;
   assigned_to: string | null;

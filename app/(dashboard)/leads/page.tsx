@@ -60,6 +60,7 @@ export default function LeadsPage() {
     email: l.email,
     phone: l.phone,
     company: l.company,
+    source_details: l.source_details,
   }));
 
   const [editingLeadId, setEditingLeadId] = useState<string | null>(null);
