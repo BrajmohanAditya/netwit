@@ -1,10 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, MoreHorizontal, Phone, Plus } from "lucide-react";
+import { Mail, MoreHorizontal, Phone, Plus, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import type { Lead } from "@/types/leads";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 
 import { PageHeader } from "@/components/page-header";
 import { LeadStats } from "@/components/leads/lead-stats";
@@ -48,24 +54,15 @@ export default function LeadsPage() {
   // const [leads] = useState<Lead[]>(mockLeads); // Removed mock data state
   const rawLeads = useQuery(api.leads.get);
   const createLead = useMutation(api.leads.create);
+  const deleteLead = useMutation(api.leads.deleteLead);
 
-  const leads: Lead[] = (rawLeads || []).map(l => ({
-    ...l,
-    id: l._id,
-    name: l.name,
-    interest_vehicle_id: null,
-    assigned_to: l.assigned_to || null,
-    notes: l.notes || null,
-    customer_id: l.customer_id || null,
-    email: l.email,
-    phone: l.phone,
-    company: l.company,
-    source_details: l.source_details,
-  }));
+  const leads: Doc<"leads">[] = rawLeads || [];
 
   const [editingLeadId, setEditingLeadId] = useState<string | null>(null);
   const [editedNames, setEditedNames] = useState<Record<string, string>>({});
-  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+  const [selectedLeadId, setSelectedLeadId] = useState<Id<"leads"> | null>(
+    null,
+  );
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
 
@@ -80,6 +77,37 @@ export default function LeadsPage() {
   const [newLeadVehicle, setNewLeadVehicle] = useState("");
   const [newLeadSourceDetails, setNewLeadSourceDetails] = useState("");
   const [newLeadNotes, setNewLeadNotes] = useState("");
+
+  // Filter State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterSource, setFilterSource] = useState("all");
+  const [filterDate, setFilterDate] = useState("range");
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setFilterSource("all");
+    setFilterDate("range");
+  };
+
+  const filteredLeads = leads.filter((lead) => {
+    // Search filter
+    const matchesSearch =
+      searchQuery === "" ||
+      lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (lead.email &&
+        lead.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (lead.phone && lead.phone.includes(searchQuery));
+
+    // Source filter
+    const matchesSource =
+      filterSource === "all" || lead.source === filterSource;
+
+    // Date filter - Placeholder logic for now since "range" is default and we don't have complex date logic ready
+    // You can implement actual date filtering here later
+    const matchesDate = true;
+
+    return matchesSearch && matchesSource && matchesDate;
+  });
 
   const handleNewLead = () => {
     setNewLeadName("");
@@ -103,7 +131,8 @@ export default function LeadsPage() {
       company: newLeadCompany,
       source: newLeadSource,
       status: newLeadStatus,
-      assignedTo: newLeadAssigned === "Unassigned" ? undefined : newLeadAssigned,
+      assignedTo:
+        newLeadAssigned === "Unassigned" ? undefined : newLeadAssigned,
       vehicleInterest: newLeadVehicle,
       sourceDetails: newLeadSourceDetails,
       notes: newLeadNotes,
@@ -111,25 +140,28 @@ export default function LeadsPage() {
     setIsNewLeadOpen(false);
   };
 
-  const openLeadDetails = (leadId: string) => {
+  const openLeadDetails = (leadId: Id<"leads">) => {
     setSelectedLeadId(leadId);
     setIsLeadModalOpen(true);
   };
 
-  const selectedLead = leads.find((lead) => lead.id === selectedLeadId) || null;
+  const selectedLead =
+    filteredLeads.find((lead) => lead._id === selectedLeadId) || null;
   // Dynamic details derived from the lead object itself now
   const selectedDetails = selectedLead
     ? {
-      name: selectedLead.name,
-      phone: selectedLead.phone || "N/A",
-      sourceLabel: selectedLead.source,
-      vehicleLabel: selectedLead.interest_vehicle_id ? "Vehicle Interest" : "Vehicle TBD",
-      assignedTo: selectedLead.assigned_to || "Unassigned",
-      createdLabel: new Date(selectedLead.created_at).toLocaleDateString(),
-      priority: "medium" as const, // Defaulting for now
-      email: selectedLead.email || "N/A",
-      company: selectedLead.company || "Adaptus Auto",
-    }
+        name: selectedLead.name,
+        phone: selectedLead.phone || "N/A",
+        sourceLabel: selectedLead.source,
+        vehicleLabel: selectedLead.interest_vehicle_id
+          ? "Vehicle Interest"
+          : "Vehicle TBD",
+        assignedTo: selectedLead.assigned_to || "Unassigned",
+        createdLabel: new Date(selectedLead.created_at).toLocaleDateString(),
+        priority: "medium" as const, // Defaulting for now
+        email: selectedLead.email || "N/A",
+        company: selectedLead.company || "Adaptus Auto",
+      }
     : undefined;
 
   return (
@@ -153,27 +185,55 @@ export default function LeadsPage() {
           </DialogHeader>
           <div className="grid gap-4">
             <div className="grid gap-3 md:grid-cols-2">
-              <Input placeholder="Full name" value={newLeadName} onChange={(e) => setNewLeadName(e.target.value)} />
-              <Input placeholder="Email" type="email" value={newLeadEmail} onChange={(e) => setNewLeadEmail(e.target.value)} />
-              <Input placeholder="Phone" type="tel" value={newLeadPhone} onChange={(e) => setNewLeadPhone(e.target.value)} />
-              <Input placeholder="Company (optional)" value={newLeadCompany} onChange={(e) => setNewLeadCompany(e.target.value)} />
+              <Input
+                placeholder="Full name"
+                value={newLeadName}
+                onChange={(e) => setNewLeadName(e.target.value)}
+              />
+              <Input
+                placeholder="Email"
+                type="email"
+                value={newLeadEmail}
+                onChange={(e) => setNewLeadEmail(e.target.value)}
+              />
+              <Input
+                placeholder="Phone"
+                type="tel"
+                value={newLeadPhone}
+                onChange={(e) => setNewLeadPhone(e.target.value)}
+              />
+              <Input
+                placeholder="Company (optional)"
+                value={newLeadCompany}
+                onChange={(e) => setNewLeadCompany(e.target.value)}
+              />
             </div>
             <div className="grid gap-3 md:grid-cols-3">
-              <Select value={newLeadSource} onChange={(e) => setNewLeadSource(e.target.value)}>
+              <Select
+                value={newLeadSource}
+                onChange={(e) => setNewLeadSource(e.target.value)}
+              >
                 <option value="Website">Website</option>
                 <option value="Referral">Referral</option>
-                <option value="Walk-in">Walk-in</option>
-                <option value="Phone">Phone</option>
-                <option value="Marketplace">Marketplace</option>
+                <option value="Craigslist">Craigslist</option>
+                <option value="Kijiji">Kijiji</option>
+                <option value="Text Us">Text Us</option>
+                <option value="Other">Other</option>
               </Select>
-              <Select value={newLeadStatus} onChange={(e) => setNewLeadStatus(e.target.value)}>
+              <Select
+                value={newLeadStatus}
+                onChange={(e) => setNewLeadStatus(e.target.value)}
+              >
                 {kanbanStatuses.map((status) => (
                   <option key={status} value={status}>
                     {status}
                   </option>
                 ))}
               </Select>
-              <Select value={newLeadAssigned} onChange={(e) => setNewLeadAssigned(e.target.value)}>
+              <Select
+                value={newLeadAssigned}
+                onChange={(e) => setNewLeadAssigned(e.target.value)}
+              >
                 <option value="Unassigned">Unassigned</option>
                 <option value="Agam Chawla">Agam Chawla</option>
                 <option value="Kyle Pierce">Kyle Pierce</option>
@@ -181,10 +241,22 @@ export default function LeadsPage() {
               </Select>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
-              <Input placeholder="Vehicle interest" value={newLeadVehicle} onChange={(e) => setNewLeadVehicle(e.target.value)} />
-              <Input placeholder="Lead source details" value={newLeadSourceDetails} onChange={(e) => setNewLeadSourceDetails(e.target.value)} />
+              <Input
+                placeholder="Vehicle interest"
+                value={newLeadVehicle}
+                onChange={(e) => setNewLeadVehicle(e.target.value)}
+              />
+              <Input
+                placeholder="Lead source details"
+                value={newLeadSourceDetails}
+                onChange={(e) => setNewLeadSourceDetails(e.target.value)}
+              />
             </div>
-            <Input placeholder="Notes" value={newLeadNotes} onChange={(e) => setNewLeadNotes(e.target.value)} />
+            <Input
+              placeholder="Notes"
+              value={newLeadNotes}
+              onChange={(e) => setNewLeadNotes(e.target.value)}
+            />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setIsNewLeadOpen(false)}>
@@ -200,7 +272,17 @@ export default function LeadsPage() {
         <LeadStats />
 
         {/* Filters and View Toggle */}
-        <LeadFilters view={viewMode} onViewChange={setViewMode} />
+        <LeadFilters
+          view={viewMode}
+          onViewChange={setViewMode}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          filterSource={filterSource}
+          setFilterSource={setFilterSource}
+          filterDate={filterDate}
+          setFilterDate={setFilterDate}
+          onClearFilters={clearFilters}
+        />
 
         {/* Content Area */}
         <div className="min-h-[400px]">
@@ -225,7 +307,7 @@ export default function LeadsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {leads.map((lead) => {
+                  {filteredLeads.map((lead) => {
                     // Adapt the lead object for display
                     const details = {
                       name: lead.name,
@@ -233,13 +315,15 @@ export default function LeadsPage() {
                       sourceLabel: lead.source,
                       vehicleLabel: "Vehicle TBD",
                       assignedTo: lead.assigned_to || "Unassigned",
-                      createdLabel: new Date(lead.created_at).toLocaleDateString(),
-                      priority: "low" as const
+                      createdLabel: new Date(
+                        lead.created_at,
+                      ).toLocaleDateString(),
+                      priority: "low" as const,
                     };
 
-                    const isOverdue = lead.id === "1";
+                    const isOverdue = String(lead._id) === "1";
                     const nextFollowUp = isOverdue ? "Overdue" : "Tomorrow";
-                    const leadScore = lead.id === "1" ? 92 : 68;
+                    const leadScore = String(lead._id) === "1" ? 92 : 68;
                     const scoreColor =
                       leadScore >= 85
                         ? "bg-green-100 text-green-800"
@@ -247,25 +331,26 @@ export default function LeadsPage() {
                           ? "bg-yellow-100 text-yellow-800"
                           : "bg-red-100 text-red-800";
 
-                    const displayName = editedNames[lead.id] || details.name;
+                    const displayName =
+                      editedNames[String(lead._id)] || details.name;
 
                     return (
                       <TableRow
-                        key={lead.id}
+                        key={lead._id}
                         className={isOverdue ? "bg-red-50/60" : ""}
                       >
                         <TableCell>
-                          <Checkbox aria-label={`Select lead ${lead.id}`} />
+                          <Checkbox aria-label={`Select lead ${lead._id}`} />
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
-                            {editingLeadId === lead.id ? (
+                            {editingLeadId === String(lead._id) ? (
                               <Input
                                 value={displayName}
                                 onChange={(e) =>
                                   setEditedNames((prev) => ({
                                     ...prev,
-                                    [lead.id]: e.target.value,
+                                    [String(lead._id)]: e.target.value,
                                   }))
                                 }
                                 onBlur={() => setEditingLeadId(null)}
@@ -280,7 +365,9 @@ export default function LeadsPage() {
                             ) : (
                               <button
                                 className="text-sm font-semibold text-foreground hover:underline"
-                                onDoubleClick={() => setEditingLeadId(lead.id)}
+                                onDoubleClick={() =>
+                                  setEditingLeadId(String(lead._id))
+                                }
                               >
                                 {displayName}
                               </button>
@@ -384,14 +471,31 @@ export default function LeadsPage() {
                             >
                               <Mail className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={() => openLeadDetails(lead.id)}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => openLeadDetails(lead._id)}
+                                >
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive text-red-600"
+                                  onClick={() => deleteLead({ id: lead._id })}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -417,12 +521,15 @@ export default function LeadsPage() {
                         {status}
                       </h3>
                       <span className="text-xs bg-muted px-2 py-0.5 rounded-full font-medium">
-                        {leads.filter((l) => l.status === status).length}
+                        {
+                          filteredLeads.filter((l) => l.status === status)
+                            .length
+                        }
                       </span>
                     </div>
 
                     <div className="space-y-3 overflow-y-auto flex-1 pr-2">
-                      {leads
+                      {filteredLeads
                         .filter((l) => l.status === status)
                         .map((lead) => {
                           const details = {
@@ -431,18 +538,20 @@ export default function LeadsPage() {
                             sourceLabel: lead.source,
                             vehicleLabel: "Vehicle TBD",
                             assignedTo: lead.assigned_to || "Unassigned",
-                            createdLabel: new Date(lead.created_at).toLocaleDateString(),
-                            priority: "low" as const
+                            createdLabel: new Date(
+                              lead.created_at,
+                            ).toLocaleDateString(),
+                            priority: "low" as const,
                           };
 
                           return (
                             <div
-                              key={lead.id}
+                              key={lead._id}
                               className="cursor-pointer"
-                              onClick={() => openLeadDetails(lead.id)}
+                              onClick={() => openLeadDetails(lead._id)}
                             >
                               <LeadCard
-                                lead={lead}
+                                leadId={String(lead._id)}
                                 name={details.name}
                                 phone={details.phone}
                                 sourceLabel={details.sourceLabel}
@@ -467,6 +576,7 @@ export default function LeadsPage() {
         onOpenChange={setIsLeadModalOpen}
         lead={selectedLead}
         details={selectedDetails}
+        onDelete={(id) => deleteLead({ id })}
       />
     </div>
   );

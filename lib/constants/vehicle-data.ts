@@ -120,6 +120,6 @@ export const ODOMETER_UNITS = [
 ];
 
 export const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
-export const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+export const MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB (Reduced for local data URI compatibility)
 export const MAX_IMAGES = 20;
 export const DESCRIPTION_MAX_LENGTH = 2000;

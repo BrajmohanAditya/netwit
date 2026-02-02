@@ -13,9 +13,28 @@ import { Select } from "@/components/ui/select";
 interface LeadFiltersProps {
   view: "kanban" | "table";
   onViewChange: (view: "kanban" | "table") => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  filterSource: string;
+  setFilterSource: (source: string) => void;
+  filterDate: string;
+  setFilterDate: (date: string) => void;
+  onClearFilters: () => void;
 }
 
-export function LeadFilters({ view, onViewChange }: LeadFiltersProps) {
+export function LeadFilters({
+  view,
+  onViewChange,
+  searchQuery,
+  setSearchQuery,
+  filterSource,
+  setFilterSource,
+  filterDate,
+  setFilterDate,
+  onClearFilters,
+}: LeadFiltersProps) {
+  const hasActiveFilters = searchQuery !== "" || filterSource !== "all" || filterDate !== "range";
+
   return (
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-background border rounded-lg p-3">
@@ -26,6 +45,8 @@ export function LeadFilters({ view, onViewChange }: LeadFiltersProps) {
               type="search"
               placeholder="Search leads..."
               className="pl-8 w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Button variant="outline" size="icon" title="Filter options">
@@ -34,31 +55,31 @@ export function LeadFilters({ view, onViewChange }: LeadFiltersProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <Select defaultValue="all" className="w-[140px]">
+          <Select
+            value={filterSource}
+            onChange={(e) => setFilterSource(e.target.value)}
+            className="w-[140px]"
+          >
             <option value="all">All Sources</option>
-            <option value="web">Website</option>
-            <option value="ref">Referral</option>
-            <option value="campaign">Campaign</option>
+            <option value="Website">Website</option>
+            <option value="Referral">Referral</option>
+            <option value="Craigslist">Craigslist</option>
+            <option value="Kijiji">Kijiji</option>
+            <option value="Text Us">Text Us</option>
+            <option value="Other">Other</option>
           </Select>
-          <Select defaultValue="range" className="w-[140px]">
+          <Select
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+            className="w-[140px]"
+          >
             <option value="range">Date Range</option>
             <option value="today">Today</option>
             <option value="week">This Week</option>
             <option value="month">This Month</option>
             <option value="custom">Custom</option>
           </Select>
-          <Select defaultValue="month" className="w-[120px]">
-            <option value="month">Month</option>
-            <option value="jan">January</option>
-            <option value="feb">February</option>
-            <option value="mar">March</option>
-          </Select>
-          <Select defaultValue="more" className="w-[120px]">
-            <option value="more">More</option>
-            <option value="status">Status</option>
-            <option value="assignee">Assignee</option>
-            <option value="priority">Priority</option>
-          </Select>
+          {/* Other filters are placeholders for now */}
         </div>
 
         <div className="inline-flex items-center rounded-md border bg-background p-1">
@@ -81,18 +102,37 @@ export function LeadFilters({ view, onViewChange }: LeadFiltersProps) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Active:
-        </span>
-        <span className="text-xs bg-muted px-2 py-1 rounded-full">
-          This Month
-        </span>
-        <span className="text-xs bg-muted px-2 py-1 rounded-full">
-          Not Started
-        </span>
-        <Button variant="ghost" size="sm" className="h-7 px-2">
-          Clear All
+      <div className="flex flex-wrap items-center gap-2 h-8">
+        {hasActiveFilters && (
+          <>
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mr-2">
+              Active:
+            </span>
+            {searchQuery && (
+              <span className="text-xs bg-muted px-2 py-1 rounded-full border">
+                Search: {searchQuery}
+              </span>
+            )}
+            {filterSource !== "all" && (
+              <span className="text-xs bg-muted px-2 py-1 rounded-full border">
+                Source: {filterSource}
+              </span>
+            )}
+            {filterDate !== "range" && (
+              <span className="text-xs bg-muted px-2 py-1 rounded-full border">
+                Date: {filterDate}
+              </span>
+            )}
+          </>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-muted-foreground hover:text-foreground ml-auto"
+          onClick={onClearFilters}
+          disabled={!hasActiveFilters}
+        >
+          Clear Filters
         </Button>
       </div>
     </div>

@@ -1,76 +1,111 @@
+"use client";
+
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { VehicleEditForm } from "@/components/inventory/vehicle-edit-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
-import { Database } from "@/types/database.types";
 import { Vehicle } from "@/types/vehicle";
+import { Doc, Id } from "@/convex/_generated/dataModel";
+import { VehicleFormData } from "@/types/inventory";
+import toast from "react-hot-toast";
 
 interface InventoryVehicleEditPageProps {
   params: { id: string };
 }
 
-type DbVehicle = Database["public"]["Tables"]["vehicles"]["Row"];
-
-const statusMap: Record<DbVehicle["status"], Vehicle["status"]> = {
+const statusMap: Record<string, Vehicle["status"]> = {
+  Available: "active",
   Active: "active",
   Inactive: "inactive",
   Sold: "sold",
+  Pending: "coming-soon",
   "Coming Soon": "coming-soon",
 };
 
-const FALLBACK_IMAGE = "https://placehold.co/800x450?text=Vehicle";
-
-const mapVehicle = (row: DbVehicle): Vehicle => {
-  const createdAt = new Date(row.created_at);
+const mapVehicle = (row: Doc<"vehicles">): Vehicle => {
+  const createdAt = new Date(row.created_at || new Date());
   const daysInStock = Math.max(
     0,
     Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24)),
   );
 
   return {
-    id: row.id,
-    stockNumber: row.stock_number ?? "N/A",
+    id: row._id,
+    stockNumber: row.stockNo ?? "N/A",
     year: row.year,
     make: row.make,
     model: row.model,
     trim: row.trim ?? "",
     vin: row.vin,
-    image: row.image_gallery?.[0] ?? FALLBACK_IMAGE,
-    status: statusMap[row.status],
-    purchasePrice: row.purchase_price,
-    retailPrice: row.retail_price,
-    odometer: row.odometer,
-    fuel: "gas",
-    transmission: "auto",
-    bodyType: "sedan",
+    image: row.images?.[0] ?? "",
+    status: statusMap[row.status] ?? "active",
+    purchasePrice: row.cost ?? 0,
+    retailPrice: row.price,
+    odometer: row.mileage,
+    fuel: "gas", // Default since not in schema
+    transmission: "auto", // Default since not in schema
+    bodyType: "sedan", // Default since not in schema
     daysInStock,
     createdAt,
   };
 };
 
-export const dynamic = "force-dynamic";
-
-export default async function InventoryVehicleEditPage({
+export default function InventoryVehicleEditPage({
   params,
 }: InventoryVehicleEditPageProps) {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("vehicles")
-    .select("*")
-    .eq("id", params.id)
-    .maybeSingle();
+  const router = useRouter();
+  const vehicleId = params.id as Id<"vehicles">;
 
-  if (error) {
-    console.error("Failed to load vehicle:", error.message);
+  const vehicleData = useQuery(api.vehicles.getById, { id: vehicleId });
+  const updateVehicle = useMutation(api.vehicles.update);
+
+  if (vehicleData === undefined) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
   }
 
-  const vehicle = data ? mapVehicle(data) : null;
-
-  if (!vehicle) {
-    notFound();
+  if (vehicleData === null) {
+    return (
+      <div className="flex h-96 flex-col items-center justify-center space-y-4">
+        <h1 className="text-2xl font-bold">Vehicle Not Found</h1>
+        <Button asChild variant="outline">
+          <Link href="/inventory">Back to Inventory</Link>
+        </Button>
+      </div>
+    );
   }
+
+  const vehicle = mapVehicle(vehicleData);
+
+  const handleUpdate = async (data: VehicleFormData) => {
+    try {
+      await updateVehicle({
+        id: vehicleId,
+        stockNo: data.stock_number,
+        vin: data.vin,
+        year: data.year,
+        make: data.make,
+        model: data.model,
+        trim: data.trim,
+        status: data.status,
+        price: data.retail_price,
+        cost: data.purchase_price,
+        mileage: data.odometer,
+        images: data.image_gallery,
+      });
+      toast.success("Vehicle updated successfully");
+      router.push(`/inventory/${vehicleId}`);
+    } catch (error) {
+      console.error("Failed to update vehicle:", error);
+      toast.error("Failed to update vehicle");
+    }
+  };
 
   return (
     <div className="space-y-6">

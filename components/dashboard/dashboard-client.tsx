@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { StatCards } from "@/components/dashboard/stat-cards";
 import { LeadSourceChart } from "@/components/dashboard/lead-source-chart";
 import { QuickActionsPanel } from "@/components/dashboard/quick-actions-panel";
@@ -39,21 +41,31 @@ interface DashboardClientProps {
   recentLeads: RecentLead[];
 }
 
+import { Loader2 } from "lucide-react";
+
 export function DashboardClient({
   metrics,
   recentLeads,
 }: DashboardClientProps) {
   const router = useRouter();
+  const createLead = useMutation(api.leads.create);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const kanbanStatuses = [
     "Not Started",
     "In Progress",
-    "Contacted",
     "Qualified",
-    "Appointment",
-    "Negotiating",
-    "Converted",
+    "Negotiating", // Map to valid DB status? DB has: 'Not Started', 'In Progress', 'Qualified', 'Closed', 'Lost'
+    "Converted", // Map to Closed/Won?
+  ];
+  // DB Statuses: 'Not Started', 'In Progress', 'Qualified', 'Closed', 'Lost'
+  const dbStatuses = [
+    "Not Started",
+    "In Progress",
+    "Qualified",
+    "Closed",
+    "Lost",
   ];
 
   const handleRefresh = async () => {
@@ -95,6 +107,52 @@ export function DashboardClient({
   const handleViewAllLeads = () => {
     router.push("/leads");
   };
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsLoading(true);
+
+    const formData = new FormData(event.currentTarget);
+    // Handle "Vehicle interest" which is text in UI but UUID in DB.
+    // We'll prepend it to notes for now.
+    const vehicleInterest = formData.get("vehicle_interest_text") as string;
+    const currentNotes = formData.get("notes") as string;
+    if (vehicleInterest) {
+      formData.set(
+        "notes",
+        `Vehicle Interest: ${vehicleInterest}\n${currentNotes}`,
+      );
+    }
+
+    // Remove invalid fields that shouldn't go to server action validation strictly if not needed,
+    // but our action scrapes by name.
+
+    try {
+      await createLead({
+        name: String(formData.get("full_name") || "").trim(),
+        email: String(formData.get("email") || "").trim() || undefined,
+        phone: String(formData.get("phone") || "").trim() || undefined,
+        company: String(formData.get("company") || "").trim() || undefined,
+        source: String(formData.get("source") || "Website"),
+        status: String(formData.get("status") || "Not Started"),
+        assignedTo:
+          String(formData.get("assigned_to") || "").trim() || undefined,
+        vehicleInterest: vehicleInterest || undefined,
+        sourceDetails:
+          String(formData.get("lead_source_details") || "").trim() || undefined,
+        notes: String(formData.get("notes") || "").trim() || undefined,
+      });
+
+      setIsNewLeadOpen(false);
+      alert("Lead created successfully.");
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to create lead:", error);
+      alert("Failed to create lead.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   const now = new Date();
   const lastUpdated = now.toLocaleTimeString([], {
@@ -155,47 +213,62 @@ export function DashboardClient({
               Capture the customer details and lead information to get started.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4">
-            <div className="grid gap-3 md:grid-cols-2">
-              <Input placeholder="Full name" />
-              <Input placeholder="Email" type="email" />
-              <Input placeholder="Phone" type="tel" />
-              <Input placeholder="Company (optional)" />
+          <form onSubmit={onSubmit}>
+            <div className="grid gap-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input name="full_name" placeholder="Full name" required />
+                <Input name="email" placeholder="Email" type="email" />
+                <Input name="phone" placeholder="Phone" type="tel" />
+                <Input name="company" placeholder="Company (optional)" />
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                <Select name="source" defaultValue="Website">
+                  <option value="Website">Website</option>
+                  <option value="Referral">Referral</option>
+                  <option value="Craigslist">Craigslist</option>
+                  <option value="Kijiji">Kijiji</option>
+                  <option value="Text Us">Text Us</option>
+                  <option value="Other">Other</option>
+                </Select>
+                <Select name="status" defaultValue="Not Started">
+                  {dbStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </Select>
+                <Select name="assigned_to" defaultValue="">
+                  <option value="">Unassigned</option>
+                  {/* Pending: Fetch actual users. For now leave empty to allow submit */}
+                  {/* <option value="Agam Chawla">Agam Chawla</option> */}
+                </Select>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  name="vehicle_interest_text"
+                  placeholder="Vehicle interest"
+                />
+                <Input
+                  name="lead_source_details"
+                  placeholder="Lead source details"
+                />
+              </div>
+              <Input name="notes" placeholder="Notes" />
             </div>
-            <div className="grid gap-3 md:grid-cols-3">
-              <Select defaultValue="Website">
-                <option value="Website">Website</option>
-                <option value="Referral">Referral</option>
-                <option value="Walk-in">Walk-in</option>
-                <option value="Phone">Phone</option>
-                <option value="Marketplace">Marketplace</option>
-              </Select>
-              <Select defaultValue="Not Started">
-                {kanbanStatuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </Select>
-              <Select defaultValue="Unassigned">
-                <option value="Unassigned">Unassigned</option>
-                <option value="Agam Chawla">Agam Chawla</option>
-                <option value="Kyle Pierce">Kyle Pierce</option>
-                <option value="Amy Richards">Amy Richards</option>
-              </Select>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsNewLeadOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Lead
+              </Button>
             </div>
-            <div className="grid gap-3 md:grid-cols-2">
-              <Input placeholder="Vehicle interest" />
-              <Input placeholder="Lead source details" />
-            </div>
-            <Input placeholder="Notes" />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setIsNewLeadOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => setIsNewLeadOpen(false)}>Create Lead</Button>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
 

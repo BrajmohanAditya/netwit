@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 
 interface VehicleEditFormProps {
   vehicle: Vehicle;
+  onSubmit?: (data: VehicleFormData) => Promise<void>;
 }
 
 const mapStatusToForm = (status: VehicleStatus): VehicleFormData["status"] => {
@@ -27,7 +28,7 @@ const mapStatusToForm = (status: VehicleStatus): VehicleFormData["status"] => {
   }
 };
 
-export function VehicleEditForm({ vehicle }: VehicleEditFormProps) {
+export function VehicleEditForm({ vehicle, onSubmit }: VehicleEditFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
 
@@ -49,6 +50,11 @@ export function VehicleEditForm({ vehicle }: VehicleEditFormProps) {
   };
 
   const handleSubmit = async (data: VehicleFormData) => {
+    if (onSubmit) {
+      await onSubmit(data);
+      return;
+    }
+
     const { error } = await supabase
       .from("vehicles")
       .update({

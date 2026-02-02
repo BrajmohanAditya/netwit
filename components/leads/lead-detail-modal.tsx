@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import type { Lead } from "@/types/leads";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
+import { Trash2 } from "lucide-react";
 
 interface LeadDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  lead: Lead | null;
+  lead: Doc<"leads"> | null;
+  onDelete?: (id: Id<"leads">) => void;
   details?: {
     name?: string;
     email?: string;
@@ -29,6 +31,7 @@ export function LeadDetailModal({
   open,
   onOpenChange,
   lead,
+  onDelete,
   details,
 }: LeadDetailModalProps) {
   const createdLabel = details?.createdLabel || "2 days ago";
@@ -36,7 +39,7 @@ export function LeadDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[900px] w-[95vw]">
+      <DialogContent className="max-w-[900px] w-[95vw] max-h-[85vh] overflow-y-auto">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -48,6 +51,22 @@ export function LeadDetailModal({
                 <span>Created {createdLabel}</span>
               </div>
             </div>
+            {lead && onDelete && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={() => {
+                  if (confirm("Are you sure you want to delete this lead?")) {
+                    onDelete(lead._id);
+                    onOpenChange(false);
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Lead
+              </Button>
+            )}
           </div>
 
           <Tabs defaultValue="info">

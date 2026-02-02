@@ -30,17 +30,24 @@ const mockClient = {
     signInWithPassword: () => Promise.resolve({ data: {}, error: null }),
     signInWithOAuth: () => Promise.resolve({ data: {}, error: null }),
     signOut: () => Promise.resolve({ error: null }),
-    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
+    onAuthStateChange: () => ({
+      data: { subscription: { unsubscribe: () => {} } },
+    }),
     signUp: () => Promise.resolve({ data: {}, error: null }),
     resetPasswordForEmail: () => Promise.resolve({ data: {}, error: null }),
   },
   storage: {
     from: () => ({
-      upload: () => Promise.resolve({ data: { path: "mock-path" }, error: null }),
+      upload: () =>
+        Promise.resolve({ data: { path: "mock-path" }, error: null }),
       download: () => Promise.resolve({ data: new Blob(), error: null }),
       remove: () => Promise.resolve({ data: {}, error: null }),
       list: () => Promise.resolve({ data: [], error: null }),
-      getPublicUrl: (path: string) => ({ data: { publicUrl: `https://mock.com/${path}` } }),
+      getPublicUrl: (path: string) => ({
+        data: {
+          publicUrl: `https://placehold.co/800x450?text=${encodeURIComponent(path)}`,
+        },
+      }),
     }),
   },
 } as any;

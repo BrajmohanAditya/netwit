@@ -1,14 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { Vehicle, VehicleFilters, VehicleStats } from "@/types/vehicle";
 import { VehiclePageHeader } from "./page-header";
 import { FilterBar } from "./filter-bar";
 import { VehicleGrid } from "./vehicle-grid";
 import { VehicleTable } from "./vehicle-table";
 import { BulkActionsBar } from "./bulk-actions-bar";
-import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 
 interface VehicleListingProps {
@@ -18,7 +19,11 @@ interface VehicleListingProps {
 export function VehicleListing({ vehicles }: VehicleListingProps) {
   const router = useRouter();
   const [items, setItems] = useState<Vehicle[]>(vehicles);
-  const supabase = useMemo(() => createClient(), []);
+
+  useEffect(() => {
+    setItems(vehicles);
+  }, [vehicles]);
+  const deleteVehicle = useMutation(api.vehicles.deleteVehicle);
   const [view, setView] = useState<"grid" | "table">("grid");
   const [selectedVehicles, setSelectedVehicles] = useState<Set<string>>(
     new Set(),
@@ -170,12 +175,12 @@ export function VehicleListing({ vehicles }: VehicleListingProps) {
       return next;
     });
 
-    const { error } = await supabase.from("vehicles").delete().eq("id", id);
-    if (error) {
+    try {
+      await deleteVehicle({ id });
+      toast.success("Vehicle deleted successfully.");
+    } catch (error) {
       setItems(previousItems);
       toast.error("Failed to delete vehicle. Please try again.");
-    } else {
-      toast.success("Vehicle deleted successfully.");
     }
   };
 
@@ -189,16 +194,12 @@ export function VehicleListing({ vehicles }: VehicleListingProps) {
     );
     setSelectedVehicles(new Set());
 
-    const { error } = await supabase
-      .from("vehicles")
-      .delete()
-      .in("id", idsToDelete);
-
-    if (error) {
+    try {
+      await Promise.all(idsToDelete.map((id) => deleteVehicle({ id })));
+      toast.success("Selected vehicles deleted.");
+    } catch (error) {
       setItems(previousItems);
       toast.error("Failed to delete selected vehicles.");
-    } else {
-      toast.success("Selected vehicles deleted.");
     }
   };
 

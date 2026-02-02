@@ -10,12 +10,11 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { Lead } from "@/types/leads";
 
 type Priority = "high" | "medium" | "low";
 
 interface LeadCardProps {
-  lead: Lead;
+  leadId: string;
   name: string;
   phone: string;
   sourceLabel: string;
@@ -32,7 +31,7 @@ const priorityBorder: Record<Priority, string> = {
 };
 
 export function LeadCard({
-  lead,
+  leadId,
   name,
   phone,
   sourceLabel,
@@ -116,7 +115,7 @@ export function LeadCard({
         </div>
 
         <div className="text-[10px] text-muted-foreground">
-          Lead ID: {lead.id}
+          Lead ID: {leadId}
         </div>
       </div>
     </div>

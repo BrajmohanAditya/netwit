@@ -2,6 +2,8 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import {
   VehicleFormData,
   createEmptyFormData,
@@ -27,6 +29,7 @@ export function useVehicleWizard() {
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const [mounted, setMounted] = useState(false);
   const supabase = useMemo(() => createClient(), []);
+  const createVehicle = useMutation(api.vehicles.create);
 
   // Load from localStorage only on client-side mount
   useEffect(() => {
@@ -165,37 +168,42 @@ export function useVehicleWizard() {
                 data: { publicUrl },
               } = supabase.storage.from("vehicles").getPublicUrl(filePath);
 
-              uploadedImages.push(publicUrl);
+              // Detect if we are using the mock client (which returns a specific Splash ID or "mock.com" etc)
+              // If so, and we have the original base64, prefer the base64 so user sees their actual image.
+              // The mock client currently returns an Unsplash URL.
+              // We check if it matches the mock return value pattern.
+              const isMockUrl =
+                publicUrl.includes("images.unsplash.com/photo-1492144534655") ||
+                publicUrl.includes("placehold.co");
+
+              if (isMockUrl) {
+                // Use the base64 string directly
+                uploadedImages.push(image);
+              } else {
+                uploadedImages.push(publicUrl);
+              }
             } catch (imageError) {
               console.error("Error processing image:", imageError);
             }
           }
         }
 
-        const { error } = await supabase.from("vehicles").insert({
+        await createVehicle({
+          stockNo: formData.stockNumber || generateStockNumber(),
           vin: formData.vin,
           year: formData.year ?? new Date().getFullYear(),
           make: formData.make,
           model: formData.model,
-          trim: formData.trim || null,
-          odometer: formData.odometer ?? 0,
-          stock_number: formData.stockNumber || null,
-          condition: conditionMap[formData.condition],
-          status: "Active",
-          purchase_price: formData.purchasePrice ?? 0,
-          retail_price: formData.retailPrice ?? 0,
-          extra_costs: formData.extraCosts ?? 0,
-          taxes: formData.taxes ?? 0,
-          image_gallery: uploadedImages.length > 0 ? uploadedImages : null,
+          trim: formData.trim || undefined,
+          status: "Available",
+          price: formData.retailPrice ?? 0,
+          cost: formData.purchasePrice ?? undefined,
+          mileage: formData.odometer ?? 0,
+          color: formData.exteriorColor || "Unknown",
+          images: uploadedImages,
+          features: [],
+          description: formData.description || undefined,
         });
-
-        if (error) {
-          console.error(
-            "Supabase insert error:",
-            JSON.stringify(error, null, 2),
-          );
-          throw error;
-        }
 
         clearDraftFromStorage();
         toast.success("Vehicle added successfully.");
