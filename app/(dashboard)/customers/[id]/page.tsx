@@ -369,7 +369,11 @@ export default function CustomerDetailPage() {
                     </div>
                     <div className="flex flex-wrap gap-3 text-sm">
                       <Badge
-                        variant={deal.status === "Closed Won" ? "green" : "red"}
+                        variant={
+                          deal.status === "Closed Won"
+                            ? "default"
+                            : "destructive"
+                        }
                       >
                         {deal.status}
                       </Badge>
