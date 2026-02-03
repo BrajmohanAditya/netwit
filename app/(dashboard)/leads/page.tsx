@@ -392,12 +392,12 @@ export default function LeadsPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="blue" radius="pill">
+                          <Badge variant="default" className="rounded-full">
                             {details.sourceLabel}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="gray" radius="pill">
+                          <Badge variant="secondary" className="rounded-full">
                             {lead.status}
                           </Badge>
                         </TableCell>
