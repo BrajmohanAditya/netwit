@@ -623,7 +623,7 @@ export default function CustomerDetailPage() {
             className="bg-blue-600 hover:bg-blue-700 text-white"
             onClick={mergeModal.close}
           >
-            onClick={handleDeleteCustomer}
+            Merge
           </Button>
         </ModalFooter>
       </Modal>
