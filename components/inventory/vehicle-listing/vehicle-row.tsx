@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Trash2, Eye, Edit2, Copy } from "lucide-react";
 import { Vehicle } from "@/types/vehicle";
 import { useState } from "react";
@@ -9,8 +10,6 @@ interface VehicleRowProps {
   vehicle: Vehicle;
   isSelected: boolean;
   onSelect: (id: string, selected: boolean) => void;
-  onEdit: (vehicle: Vehicle) => void;
-  onView: (vehicle: Vehicle) => void;
   onDelete: (id: string) => void;
 }
 
@@ -18,8 +17,6 @@ export function VehicleRow({
   vehicle,
   isSelected,
   onSelect,
-  onEdit,
-  onView,
   onDelete,
 }: VehicleRowProps) {
   const [copiedVin, setCopiedVin] = useState(false);
@@ -149,20 +146,20 @@ export function VehicleRow({
       {/* Actions */}
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => onEdit(vehicle)}
+          <Link
+            href={`/inventory/${vehicle.id}/edit`}
             className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded transition-colors"
             title="Edit"
           >
             <Edit2 className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => onView(vehicle)}
+          </Link>
+          <Link
+            href={`/inventory/${vehicle.id}`}
             className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded transition-colors"
             title="View"
           >
             <Eye className="h-4 w-4" />
-          </button>
+          </Link>
           <button
             onClick={() => onDelete(vehicle.id)}
             className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"

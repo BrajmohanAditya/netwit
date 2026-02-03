@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useMutation } from "convex/react";
 import { Stepper } from "@/components/ui/stepper";
 import { Step1BasicInfo } from "@/components/deals/wizard/step-1-basic-info";
 import { Step2Pricing } from "@/components/deals/wizard/step-2-pricing";
@@ -9,6 +10,7 @@ import { Step4Addons } from "@/components/deals/wizard/step-4-addons";
 import { Step5Review } from "@/components/deals/wizard/step-5-review";
 import { useDealWizard } from "@/lib/hooks/use-deal-wizard";
 import { saveDealDraft } from "@/lib/services/deal-form.service";
+import { api } from "@/convex/_generated/api";
 
 const STEPS = [
   { number: 1, label: "Basic Info" },
@@ -20,6 +22,7 @@ const STEPS = [
 
 export function CreateDealWizard() {
   const router = useRouter();
+  const createDeal = useMutation(api.deals.create);
   const {
     step,
     formData,
@@ -45,7 +48,17 @@ export function CreateDealWizard() {
   };
 
   const handleSubmit = async () => {
-    await submit(() => {
+    await submit(async (data) => {
+      await createDeal({
+        title: data.vehicle || "New Deal",
+        value: data.vehiclePrice || 0,
+        customer: data.customer || "Unknown Customer",
+        status: "new",
+        dealNumber: data.dealNumber,
+        vehicleId: data.vehicleMeta,
+        customerId: data.customerMeta,
+        notes: data.discountReason,
+      });
       router.push("/deals?status=created");
     });
   };

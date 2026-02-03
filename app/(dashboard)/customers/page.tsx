@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useMutation, useQuery } from "convex/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,99 +26,68 @@ import {
 import { Plus, Search } from "lucide-react";
 import { CustomerForm } from "@/components/customers/customer-form";
 import type { CustomerFormData } from "@/types/customers";
-
-// Mock data - Replace with actual data from Supabase
-const mockCustomers = [
-  {
-    id: "1",
-    name: "John Doe",
-    phone: "555-0100",
-    email: "john@example.com",
-    type: "Retail",
-    status: "Active",
-    lastContact: "2026-01-20",
-    totalDeals: { count: 4, value: 128000 },
-    duplicateFlags: [],
-  },
-  {
-    id: "2",
-    name: "John Doe",
-    phone: "555-0200",
-    email: "jdoe@example.com",
-    type: "Retail",
-    status: "Active",
-    lastContact: "2026-01-18",
-    totalDeals: { count: 2, value: 54000 },
-    duplicateFlags: ["Name"],
-  },
-  {
-    id: "3",
-    name: "Jane Smith",
-    phone: "555-0100",
-    email: "jane@example.com",
-    type: "Wholesale",
-    status: "Active",
-    lastContact: "2026-01-12",
-    totalDeals: { count: 7, value: 245000 },
-    duplicateFlags: ["Phone"],
-  },
-  {
-    id: "4",
-    name: "Avery Chen",
-    phone: "555-0430",
-    email: "avery.chen@example.com",
-    type: "Corporate",
-    status: "Inactive",
-    lastContact: "2025-12-18",
-    totalDeals: { count: 1, value: 32000 },
-    duplicateFlags: ["Email"],
-  },
-  {
-    id: "5",
-    name: "Summit Auto Group",
-    phone: "555-0771",
-    email: "purchasing@summitauto.com",
-    type: "Corporate",
-    status: "Active",
-    lastContact: "2026-01-22",
-    totalDeals: { count: 12, value: 780000 },
-    duplicateFlags: ["Name", "Email"],
-  },
-];
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 
 export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [customers] = useState(mockCustomers);
+  const customersQuery = useQuery(api.customers.get);
+  const createCustomer = useMutation(api.customers.create);
+  const deleteCustomer = useMutation(api.customers.deleteCustomer);
+  const customers = customersQuery ?? [];
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [filters, setFilters] = useState({
     type: "",
     status: "",
     more: "",
   });
-  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [selectedCustomers, setSelectedCustomers] = useState<Id<"customers">[]>(
+    [],
+  );
 
   const handleAddCustomer = async (data: CustomerFormData) => {
-    // TODO: Integrate with Supabase
-    console.log("Adding customer:", data);
-    // Check for duplicates by name and phone
+    const today = new Date().toISOString().slice(0, 10);
+    await createCustomer({
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+      city: data.city,
+      province: data.province,
+      postal_code: data.postal_code,
+      notes: data.notes,
+      type: "Retail",
+      status: "Active",
+      lastContact: today,
+    });
     setIsAddDialogOpen(false);
+  };
+
+  const handleDeleteCustomer = async (id: Id<"customers">) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this customer?",
+    );
+    if (!confirmed) return;
+    await deleteCustomer({ id });
+    setSelectedCustomers((prev) => prev.filter((item) => item !== id));
   };
 
   const filteredCustomers = useMemo(() => {
     const search = searchTerm.toLowerCase();
     return customers.filter((customer) => {
+      const customerType = customer.type ?? "Retail";
+      const customerStatus = customer.status ?? "Active";
+      const name = customer.name ?? "";
+      const phone = customer.phone ?? "";
+      const email = customer.email ?? "";
       const matchesSearch =
-        customer.name.toLowerCase().includes(search) ||
-        customer.phone?.toLowerCase().includes(search) ||
-        customer.email?.toLowerCase().includes(search);
+        name.toLowerCase().includes(search) ||
+        phone.toLowerCase().includes(search) ||
+        email.toLowerCase().includes(search);
       if (!matchesSearch) return false;
-      if (filters.type && customer.type !== filters.type) return false;
-      if (filters.status && customer.status !== filters.status) return false;
-      if (
-        filters.more === "Has Duplicates" &&
-        customer.duplicateFlags.length === 0
-      )
-        return false;
+      if (filters.type && customerType !== filters.type) return false;
+      if (filters.status && customerStatus !== filters.status) return false;
+      if (filters.more === "Has Duplicates") return false;
       return true;
     });
   }, [customers, filters, searchTerm]);
@@ -129,7 +99,7 @@ export default function CustomersPage() {
   const isAllSelected =
     filteredCustomers.length > 0 &&
     filteredCustomers.every((customer) =>
-      selectedCustomers.includes(customer.id),
+      selectedCustomers.includes(customer._id),
     );
 
   const toggleSelectAll = () => {
@@ -137,10 +107,10 @@ export default function CustomersPage() {
       setSelectedCustomers([]);
       return;
     }
-    setSelectedCustomers(filteredCustomers.map((customer) => customer.id));
+    setSelectedCustomers(filteredCustomers.map((customer) => customer._id));
   };
 
-  const toggleSelection = (id: string) => {
+  const toggleSelection = (id: Id<"customers">) => {
     setSelectedCustomers((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
@@ -165,7 +135,7 @@ export default function CustomersPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
-        <span className="font-medium text-gray-900">127</span>
+        <span className="font-medium text-gray-900">{customers.length}</span>
         <span>customers</span>
       </div>
 
@@ -272,6 +242,10 @@ export default function CustomersPage() {
                 </TableRow>
               ) : (
                 filteredCustomers.map((customer) => {
+                  const customerType = customer.type ?? "Retail";
+                  const customerStatus = customer.status ?? "Active";
+                  const totalDeals = { count: 0, value: 0 };
+                  const duplicateFlags: string[] = [];
                   const initials = customer.name
                     .split(" ")
                     .map((part) => part[0])
@@ -280,11 +254,11 @@ export default function CustomersPage() {
                     .toUpperCase();
 
                   return (
-                    <TableRow key={customer.id}>
+                    <TableRow key={customer._id}>
                       <TableCell>
                         <Checkbox
-                          checked={selectedCustomers.includes(customer.id)}
-                          onChange={() => toggleSelection(customer.id)}
+                          checked={selectedCustomers.includes(customer._id)}
+                          onChange={() => toggleSelection(customer._id)}
                           aria-label={`Select ${customer.name}`}
                         />
                       </TableCell>
@@ -300,13 +274,13 @@ export default function CustomersPage() {
                               {customer.name}
                             </div>
                             <div className="text-xs text-muted">
-                              {customer.type}
+                              {customerType}
                             </div>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell className="text-gray-700">
-                        {customer.type}
+                        {customerType}
                       </TableCell>
                       <TableCell className="text-gray-700">
                         {customer.phone || "-"}
@@ -315,29 +289,29 @@ export default function CustomersPage() {
                         {customer.email || "-"}
                       </TableCell>
                       <TableCell className="text-gray-700">
-                        {customer.lastContact}
+                        {customer.lastContact || "-"}
                       </TableCell>
                       <TableCell>
                         <div className="text-gray-900 font-semibold">
-                          {customer.totalDeals.count} deals
+                          {totalDeals.count} deals
                         </div>
                         <div className="text-xs text-muted">
-                          ${customer.totalDeals.value.toLocaleString()}
+                          ${totalDeals.value.toLocaleString()}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
-                          {customer.duplicateFlags.includes("Phone") && (
+                          {duplicateFlags.includes("Phone") && (
                             <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
                               Phone
                             </span>
                           )}
-                          {customer.duplicateFlags.includes("Name") && (
+                          {duplicateFlags.includes("Name") && (
                             <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
                               Name
                             </span>
                           )}
-                          {customer.duplicateFlags.includes("Email") && (
+                          {duplicateFlags.includes("Email") && (
                             <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
                               Email
                             </span>
@@ -346,16 +320,18 @@ export default function CustomersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap items-center gap-2">
-                          <Link href={`/customers/${customer.id}`}>
+                          <Link href={`/customers/${customer._id}`}>
                             <Button variant="outline" size="sm">
                               View
                             </Button>
                           </Link>
-                          {customer.duplicateFlags.length > 0 && (
-                            <Button variant="outline" size="sm">
-                              Merge
-                            </Button>
-                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteCustomer(customer._id)}
+                          >
+                            Delete
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>

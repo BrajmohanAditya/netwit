@@ -107,6 +107,37 @@ export default defineSchema({
     updated_at: v.string(),
   }).index("by_status", ["status"]),
 
+  deals: defineTable({
+    title: v.string(),
+    value: v.number(),
+    customer: v.string(),
+    status: v.string(),
+    dealNumber: v.optional(v.string()),
+    vehicleId: v.optional(v.string()),
+    customerId: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    created_at: v.string(),
+    updated_at: v.string(),
+  })
+    .index("by_status", ["status"])
+    .index("by_dealNumber", ["dealNumber"]),
+
+  followUps: defineTable({
+    customer: v.string(),
+    lead: v.string(),
+    dueDate: v.string(),
+    time: v.string(),
+    channel: v.string(),
+    assignedTo: v.string(),
+    status: v.string(),
+    priority: v.string(),
+    notes: v.string(),
+    created_at: v.string(),
+    updated_at: v.string(),
+  })
+    .index("by_status", ["status"])
+    .index("by_assignedTo", ["assignedTo"]),
+
   calendarEvents: defineTable({
     title: v.string(),
     type: v.string(), // "test-drive", "appointment", "call", "follow-up", "invoice"
@@ -127,4 +158,53 @@ export default defineSchema({
     created_at: v.string(),
     updated_at: v.string(),
   }).index("by_date", ["date"]),
+
+  purchaseHistory: defineTable({
+    date: v.string(),
+    vehicle: v.string(),
+    vin: v.string(),
+    price: v.number(),
+    seller: v.string(),
+    sellerType: v.string(),
+    acceptedBy: v.string(),
+    status: v.string(),
+    created_at: v.string(),
+    updated_at: v.string(),
+  })
+    .index("by_status", ["status"])
+    .index("by_date", ["date"]),
+
+  customers: defineTable({
+    name: v.string(),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    address: v.optional(v.string()),
+    city: v.optional(v.string()),
+    province: v.optional(v.string()),
+    postal_code: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    type: v.optional(v.string()),
+    status: v.optional(v.string()),
+    lastContact: v.optional(v.string()),
+    created_at: v.string(),
+    updated_at: v.string(),
+  })
+    .index("by_status", ["status"])
+    .index("by_email", ["email"]),
+
+  quotations: defineTable({
+    quoteNumber: v.string(),
+    customer: v.string(),
+    customerEmail: v.optional(v.string()),
+    vehicle: v.string(),
+    date: v.string(),
+    expiryDate: v.string(),
+    amount: v.number(),
+    status: v.string(),
+    notes: v.optional(v.string()),
+    created_at: v.string(),
+    updated_at: v.string(),
+  })
+    .index("by_quoteNumber", ["quoteNumber"])
+    .index("by_status", ["status"]),
 });

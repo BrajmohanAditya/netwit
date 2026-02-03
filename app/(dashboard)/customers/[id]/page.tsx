@@ -2,7 +2,8 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useMutation, useQuery } from "convex/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,33 +17,8 @@ import {
   ModalHeader,
   useModal,
 } from "@/components/ui/modal";
-
-const customers = [
-  {
-    id: "1",
-    name: "John Smith",
-    type: "Retail",
-    phone: "(604) 555-0100",
-    email: "john.smith@example.com",
-    address: "123 Main Street, Vancouver, BC",
-    license: "B1234-56789",
-    creditScore: 738,
-    creditStatus: "Prime",
-    quickStats: { deals: 3, spent: 142000, avg: 47000, last: "45d" },
-  },
-  {
-    id: "2",
-    name: "Avery Chen",
-    type: "Corporate",
-    phone: "(604) 555-0133",
-    email: "avery.chen@example.com",
-    address: "98 Main Street, Burnaby, BC",
-    license: "C9922-31331",
-    creditScore: 710,
-    creditStatus: "Prime",
-    quickStats: { deals: 2, spent: 86000, avg: 43000, last: "22d" },
-  },
-];
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 
 const deals = [
   {
@@ -134,15 +110,66 @@ const notes = [
 
 export default function CustomerDetailPage() {
   const params = useParams();
-  const customerId = params?.id?.toString();
+  const router = useRouter();
+  const customerId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const isValidCustomerId =
+    typeof customerId === "string" && /^[a-zA-Z0-9_-]{10,}$/.test(customerId);
   const mergeModal = useModal(false);
   const editModal = useModal(false);
   const deleteModal = useModal(false);
   const duplicateModal = useModal(false);
-  const customer = useMemo(
-    () => customers.find((item) => item.id === customerId) ?? customers[0],
-    [customerId],
+  const customer = useQuery(
+    api.customers.getById,
+    isValidCustomerId ? { id: customerId as Id<"customers"> } : "skip",
   );
+  const deleteCustomer = useMutation(api.customers.deleteCustomer);
+
+  const customerType = customer?.type ?? "Retail";
+  const quickStats = useMemo(
+    () => ({ deals: 0, spent: 0, avg: 0, last: "-" }),
+    [],
+  );
+  const addressLine = useMemo(() => {
+    if (!customer) return "-";
+    const parts = [
+      customer.address,
+      customer.city,
+      customer.province,
+      customer.postal_code,
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(", ") : "-";
+  }, [customer]);
+
+  const handleDeleteCustomer = async () => {
+    if (!customer) return;
+    await deleteCustomer({ id: customer._id });
+    deleteModal.close();
+    router.push("/customers");
+  };
+
+  if (!isValidCustomerId) {
+    return (
+      <div className="flex-1 space-y-6 p-4 sm:p-6 md:p-8">
+        <div className="text-sm text-muted">Invalid customer id.</div>
+      </div>
+    );
+  }
+
+  if (customer === null) {
+    return (
+      <div className="flex-1 space-y-6 p-4 sm:p-6 md:p-8">
+        <div className="text-sm text-muted">Customer not found.</div>
+      </div>
+    );
+  }
+
+  if (!customer) {
+    return (
+      <div className="flex-1 space-y-6 p-4 sm:p-6 md:p-8">
+        <div className="text-sm text-muted">Loading customer...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8">
@@ -197,13 +224,13 @@ export default function CustomerDetailPage() {
                 <p className="text-lg font-semibold text-gray-900">
                   {customer.name}
                 </p>
-                <p className="text-sm text-muted">{customer.type}</p>
+                <p className="text-sm text-muted">{customerType}</p>
               </div>
             </div>
             <div className="space-y-2 text-sm text-gray-700">
-              <p>{customer.phone}</p>
-              <p>{customer.email}</p>
-              <p>{customer.address}</p>
+              <p>{customer.phone || "-"}</p>
+              <p>{customer.email || "-"}</p>
+              <p>{addressLine}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm">
@@ -226,27 +253,23 @@ export default function CustomerDetailPage() {
           <CardContent className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-muted">Deals</p>
-              <p className="text-lg font-semibold">
-                {customer.quickStats.deals}
-              </p>
+              <p className="text-lg font-semibold">{quickStats.deals}</p>
             </div>
             <div>
               <p className="text-muted">Spent</p>
               <p className="text-lg font-semibold">
-                ${customer.quickStats.spent.toLocaleString()}
+                ${quickStats.spent.toLocaleString()}
               </p>
             </div>
             <div>
               <p className="text-muted">Avg</p>
               <p className="text-lg font-semibold">
-                ${customer.quickStats.avg.toLocaleString()}
+                ${quickStats.avg.toLocaleString()}
               </p>
             </div>
             <div>
               <p className="text-muted">Last</p>
-              <p className="text-lg font-semibold">
-                {customer.quickStats.last}
-              </p>
+              <p className="text-lg font-semibold">{quickStats.last}</p>
             </div>
           </CardContent>
         </Card>
@@ -275,14 +298,15 @@ export default function CustomerDetailPage() {
                   <span className="text-muted">Name:</span> {customer.name}
                 </p>
                 <p>
-                  <span className="text-muted">Phone:</span> {customer.phone}
+                  <span className="text-muted">Phone:</span>{" "}
+                  {customer.phone || "-"}
                 </p>
                 <p>
-                  <span className="text-muted">Email:</span> {customer.email}
+                  <span className="text-muted">Email:</span>{" "}
+                  {customer.email || "-"}
                 </p>
                 <p>
-                  <span className="text-muted">Address:</span>{" "}
-                  {customer.address}
+                  <span className="text-muted">Address:</span> {addressLine}
                 </p>
               </CardContent>
             </Card>
@@ -293,8 +317,7 @@ export default function CustomerDetailPage() {
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-gray-700">
                 <p>
-                  <span className="text-muted">License #:</span>{" "}
-                  {customer.license}
+                  <span className="text-muted">License #:</span> -
                 </p>
                 <p>
                   <span className="text-muted">Expiry:</span> 2028-04-30
@@ -311,12 +334,10 @@ export default function CustomerDetailPage() {
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-gray-700">
                 <p>
-                  <span className="text-muted">Score:</span>{" "}
-                  {customer.creditScore}
+                  <span className="text-muted">Score:</span> -
                 </p>
                 <p>
-                  <span className="text-muted">Tier:</span>{" "}
-                  {customer.creditStatus}
+                  <span className="text-muted">Tier:</span> -
                 </p>
                 <p>
                   <span className="text-muted">Last Pull:</span> 2026-01-12
@@ -598,7 +619,7 @@ export default function CustomerDetailPage() {
             className="bg-blue-600 hover:bg-blue-700 text-white"
             onClick={mergeModal.close}
           >
-            Confirm Merge
+            onClick={handleDeleteCustomer}
           </Button>
         </ModalFooter>
       </Modal>

@@ -7,8 +7,6 @@ interface VehicleGridProps {
   vehicles: Vehicle[];
   selectedVehicles: Set<string>;
   onSelectVehicle: (id: string, selected: boolean) => void;
-  onEdit: (vehicle: Vehicle) => void;
-  onView: (vehicle: Vehicle) => void;
   onDelete: (id: string) => void;
 }
 
@@ -16,8 +14,6 @@ export function VehicleGrid({
   vehicles,
   selectedVehicles,
   onSelectVehicle,
-  onEdit,
-  onView,
   onDelete,
 }: VehicleGridProps) {
   if (vehicles.length === 0) {
@@ -39,8 +35,6 @@ export function VehicleGrid({
           vehicle={vehicle}
           isSelected={selectedVehicles.has(vehicle.id)}
           onSelect={onSelectVehicle}
-          onEdit={onEdit}
-          onView={onView}
           onDelete={onDelete}
         />
       ))}

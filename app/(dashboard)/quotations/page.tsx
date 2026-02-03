@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Download, Plus, Printer, Eye, Send } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +25,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 
 type QuoteStatus = "Draft" | "Sent" | "Accepted" | "Declined" | "Expired";
 
@@ -37,39 +40,6 @@ interface QuoteRow {
   amount: number;
   status: QuoteStatus;
 }
-
-const quoteRows: QuoteRow[] = [
-  {
-    id: "q-1001",
-    quoteNumber: "Q-1001",
-    customer: "John Smith",
-    vehicle: "2024 Toyota Camry",
-    date: "Jan 15, 2026",
-    expiryDate: "Feb 15, 2026",
-    amount: 32500,
-    status: "Sent",
-  },
-  {
-    id: "q-1002",
-    quoteNumber: "Q-1002",
-    customer: "Sarah Johnson",
-    vehicle: "2023 Honda CR-V",
-    date: "Jan 20, 2026",
-    expiryDate: "Feb 20, 2026",
-    amount: 28900,
-    status: "Draft",
-  },
-  {
-    id: "q-1003",
-    quoteNumber: "Q-1003",
-    customer: "Michael Brown",
-    vehicle: "2025 Ford F-150",
-    date: "Jan 10, 2026",
-    expiryDate: "Jan 25, 2026",
-    amount: 55000,
-    status: "Accepted",
-  },
-];
 
 const getBadgeVariant = (status: QuoteStatus) => {
   switch (status) {
@@ -93,14 +63,24 @@ export default function QuotationsPage() {
     status: "All",
     search: "",
   });
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Id<"quotations">[]>([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [quotes, setQuotes] = useState<QuoteRow[]>(quoteRows);
+  const quotesQuery = useQuery(api.quotations.get);
+  const createQuote = useMutation(api.quotations.create);
+  const quotes = quotesQuery ?? [];
+  const [formData, setFormData] = useState({
+    customer: "",
+    customerEmail: "",
+    vehicle: "",
+    expiryDate: "",
+    amount: "",
+    notes: "",
+  });
 
   const filteredQuotes = useMemo(() => {
     return quotes.filter((q) => {
-      const matchStatus =
-        filters.status === "All" || q.status === filters.status;
+      const status = (q.status as QuoteStatus) ?? "Draft";
+      const matchStatus = filters.status === "All" || status === filters.status;
       const matchSearch =
         q.customer.toLowerCase().includes(filters.search.toLowerCase()) ||
         q.quoteNumber.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -117,12 +97,37 @@ export default function QuotationsPage() {
     }
   };
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = (id: Id<"quotations">) => {
     if (selectedIds.includes(id)) {
       setSelectedIds(selectedIds.filter((item) => item !== id));
     } else {
       setSelectedIds([...selectedIds, id]);
     }
+  };
+
+  const handleCreateQuote = async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const nextNumber = `Q-${Date.now()}`;
+    await createQuote({
+      quoteNumber: nextNumber,
+      customer: formData.customer.trim(),
+      customerEmail: formData.customerEmail?.trim() || undefined,
+      vehicle: formData.vehicle.trim(),
+      date: today,
+      expiryDate: formData.expiryDate,
+      amount: Number(formData.amount || 0),
+      status: "Draft",
+      notes: formData.notes?.trim() || undefined,
+    });
+    setIsCreateOpen(false);
+    setFormData({
+      customer: "",
+      customerEmail: "",
+      vehicle: "",
+      expiryDate: "",
+      amount: "",
+      notes: "",
+    });
   };
 
   return (
@@ -207,11 +212,11 @@ export default function QuotationsPage() {
               </TableHeader>
               <TableBody>
                 {filteredQuotes.map((quote) => (
-                  <TableRow key={quote.id}>
+                  <TableRow key={quote._id}>
                     <TableCell>
                       <Checkbox
-                        checked={selectedIds.includes(quote.id)}
-                        onChange={() => toggleSelect(quote.id)}
+                        checked={selectedIds.includes(quote._id)}
+                        onChange={() => toggleSelect(quote._id)}
                       />
                     </TableCell>
                     <TableCell className="font-medium">
@@ -223,8 +228,12 @@ export default function QuotationsPage() {
                     <TableCell>{quote.expiryDate}</TableCell>
                     <TableCell>${quote.amount.toLocaleString()}</TableCell>
                     <TableCell>
-                      <Badge variant={getBadgeVariant(quote.status)}>
-                        {quote.status}
+                      <Badge
+                        variant={getBadgeVariant(
+                          (quote.status as QuoteStatus) ?? "Draft",
+                        )}
+                      >
+                        {(quote.status as QuoteStatus) ?? "Draft"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -267,37 +276,93 @@ export default function QuotationsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Customer Name</Label>
-                <Input placeholder="Enter customer name" />
+                <Input
+                  placeholder="Enter customer name"
+                  value={formData.customer}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      customer: e.target.value,
+                    }))
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label>Email</Label>
-                <Input type="email" placeholder="customer@example.com" />
+                <Input
+                  type="email"
+                  placeholder="customer@example.com"
+                  value={formData.customerEmail}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      customerEmail: e.target.value,
+                    }))
+                  }
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Vehicle / Subject</Label>
-              <Input placeholder="e.g. 2024 Toyota Camry" />
+              <Input
+                placeholder="e.g. 2024 Toyota Camry"
+                value={formData.vehicle}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    vehicle: e.target.value,
+                  }))
+                }
+              />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Valid Until</Label>
-                <Input type="date" />
+                <Input
+                  type="date"
+                  value={formData.expiryDate}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      expiryDate: e.target.value,
+                    }))
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label>Total Amount</Label>
-                <Input type="number" placeholder="0.00" />
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={formData.amount}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      amount: e.target.value,
+                    }))
+                  }
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Notes</Label>
-              <Input placeholder="Additional notes..." />
+              <Input
+                placeholder="Additional notes..."
+                value={formData.notes}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    notes: e.target.value,
+                  }))
+                }
+              />
             </div>
           </div>
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => setIsCreateOpen(false)}>Create Draft</Button>
+            <Button onClick={handleCreateQuote}>Create Draft</Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -10,8 +10,6 @@ interface VehicleTableProps {
   selectedVehicles: Set<string>;
   onSelectVehicle: (id: string, selected: boolean) => void;
   onSelectAll: (selected: boolean) => void;
-  onEdit: (vehicle: Vehicle) => void;
-  onView: (vehicle: Vehicle) => void;
   onDelete: (id: string) => void;
 }
 
@@ -23,8 +21,6 @@ export function VehicleTable({
   selectedVehicles,
   onSelectVehicle,
   onSelectAll,
-  onEdit,
-  onView,
   onDelete,
 }: VehicleTableProps) {
   const [sortField, setSortField] = useState<SortField>(null);
@@ -135,8 +131,6 @@ export function VehicleTable({
                 vehicle={vehicle}
                 isSelected={selectedVehicles.has(vehicle.id)}
                 onSelect={onSelectVehicle}
-                onEdit={onEdit}
-                onView={onView}
                 onDelete={onDelete}
               />
             ))}

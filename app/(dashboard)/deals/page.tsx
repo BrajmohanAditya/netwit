@@ -1,121 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
+import { useSearchParams } from "next/navigation";
+import { useQuery } from "convex/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreateDealWizard } from "@/components/deals/wizard/create-deal-wizard";
+import { api } from "@/convex/_generated/api";
+import type { Doc } from "@/convex/_generated/dataModel";
 
-const stats = [
-  { label: "Active", value: "12" },
-  { label: "Pipeline", value: "$450K" },
-  { label: "Avg", value: "$37.5K" },
-  { label: "Closed", value: "8" },
-  { label: "Rate", value: "65%" },
-];
-
-const pipelineColumns = [
-  {
-    id: "negotiation",
-    title: "In Negotiation",
-    count: 5,
-    total: "$185K",
-    cards: [
-      {
-        id: "d-101",
-        title: "2022 Ford F-150",
-        value: "$42,000",
-        client: "Ava Carter",
-      },
-      {
-        id: "d-102",
-        title: "2021 BMW 3 Series",
-        value: "$38,500",
-        client: "Noah Reed",
-      },
-      {
-        id: "d-103",
-        title: "2020 Toyota Camry",
-        value: "$24,900",
-        client: "Liam West",
-      },
-      {
-        id: "d-104",
-        title: "2023 Tesla Model 3",
-        value: "$51,000",
-        client: "Mia Brooks",
-      },
-      {
-        id: "d-105",
-        title: "2019 Honda CR-V",
-        value: "$28,000",
-        client: "Ethan Stone",
-      },
-    ],
-  },
-  {
-    id: "down-payment",
-    title: "Down Payment",
-    count: 3,
-    total: "$112K",
-    cards: [
-      {
-        id: "d-201",
-        title: "2022 Audi Q5",
-        value: "$44,000",
-        client: "Olivia King",
-      },
-      {
-        id: "d-202",
-        title: "2020 Chevrolet Tahoe",
-        value: "$39,500",
-        client: "Mason Gray",
-      },
-      {
-        id: "d-203",
-        title: "2021 Mercedes-Benz C-Class",
-        value: "$28,500",
-        client: "Isla Cole",
-      },
-    ],
-  },
-  {
-    id: "financing",
-    title: "Financing",
-    count: 2,
-    total: "$78K",
-    cards: [
-      {
-        id: "d-301",
-        title: "2021 Jeep Wrangler",
-        value: "$36,500",
-        client: "Lucas Price",
-      },
-      {
-        id: "d-302",
-        title: "2020 Nissan Altima",
-        value: "$18,900",
-        client: "Emma Hart",
-      },
-    ],
-  },
-  {
-    id: "paid-off",
-    title: "Paid Off",
-    count: 1,
-    total: "$30K",
-    cards: [
-      {
-        id: "d-401",
-        title: "2018 Honda Accord",
-        value: "$30,000",
-        client: "Sophia Lane",
-      },
-    ],
-  },
-];
-
-const dealCard = {
+const fallbackDealCard = {
   id: "D-001",
   client: "John Smith",
   contact: "john.smith@adaptus.com",
@@ -170,6 +65,91 @@ const buildLinePoints = (values: number[], height: number, width: number) => {
 
 export default function DealsPage() {
   const wizardRef = useRef<HTMLDivElement | null>(null);
+  const searchParams = useSearchParams();
+  const createdStatus = searchParams.get("status") === "created";
+  const deals = useQuery(api.deals.get) || [];
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
+
+  const stats = useMemo(() => {
+    const closedDeals = deals.filter((deal) => deal.status === "paid-off");
+    const activeDeals = deals.filter((deal) => deal.status !== "paid-off");
+    const pipelineValue = activeDeals.reduce(
+      (sum, deal) => sum + deal.value,
+      0,
+    );
+    const avgValue = activeDeals.length
+      ? pipelineValue / activeDeals.length
+      : 0;
+    const closeRate = deals.length
+      ? Math.round((closedDeals.length / deals.length) * 100)
+      : 0;
+
+    return [
+      { label: "Active", value: String(activeDeals.length) },
+      { label: "Pipeline", value: formatCurrency(pipelineValue) },
+      { label: "Avg", value: formatCurrency(avgValue) },
+      { label: "Closed", value: String(closedDeals.length) },
+      { label: "Rate", value: `${closeRate}%` },
+    ];
+  }, [deals]);
+
+  const pipelineColumns = useMemo(() => {
+    const columns: {
+      id: string;
+      title: string;
+      cards: Doc<"deals">[];
+      count: number;
+      total: number;
+    }[] = [
+      { id: "new", title: "New / Inbound", cards: [], count: 0, total: 0 },
+      {
+        id: "negotiation",
+        title: "In Negotiation",
+        cards: [],
+        count: 0,
+        total: 0,
+      },
+      {
+        id: "down-payment",
+        title: "Down Payment",
+        cards: [],
+        count: 0,
+        total: 0,
+      },
+      { id: "financing", title: "Financing", cards: [], count: 0, total: 0 },
+      {
+        id: "paid-off",
+        title: "Paid Off",
+        cards: [],
+        count: 0,
+        total: 0,
+      },
+    ];
+
+    const columnMap = new Map(columns.map((col) => [col.id, col]));
+
+    deals.forEach((deal) => {
+      let status = deal.status.toLowerCase();
+      if (status === "created") status = "new";
+      const column = columnMap.get(status) ?? columnMap.get("new");
+      column?.cards.push(deal);
+    });
+
+    columns.forEach((column) => {
+      column.count = column.cards.length;
+      column.total = column.cards.reduce((sum, deal) => sum + deal.value, 0);
+    });
+
+    return columns;
+  }, [deals]);
+
+  const featuredDeal = deals[0] ?? null;
 
   return (
     <div className="flex-1 space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8">
@@ -182,12 +162,18 @@ export default function DealsPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link
-            href={`/deals/${dealCard.id}`}
-            className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-heading hover:bg-gray-50"
-          >
-            View Deal
-          </Link>
+          {featuredDeal ? (
+            <Link
+              href={`/deals/${featuredDeal.dealNumber ?? featuredDeal._id}`}
+              className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-heading hover:bg-gray-50"
+            >
+              View Deal
+            </Link>
+          ) : (
+            <span className="inline-flex items-center justify-center rounded-md border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-muted-foreground">
+              No deals yet
+            </span>
+          )}
           <Button
             className="bg-blue-600 hover:bg-blue-700 text-white"
             onClick={() =>
@@ -217,65 +203,57 @@ export default function DealsPage() {
         ))}
       </div>
 
-      {/* Deal Card + Funnel */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Deal Card */}
+        {/* Featured Deal */}
         <Card className="border border-gray-200 bg-white">
           <CardHeader>
-            <CardTitle className="text-lg">Deal Card</CardTitle>
+            <CardTitle className="text-lg">Featured Deal</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-sm font-semibold text-muted">
-              {dealCard.id}
-            </div>
-            <div>
-              <p className="text-base font-semibold text-heading">
-                {dealCard.client}
-              </p>
-              <p className="text-xs text-muted">{dealCard.contact}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted">Vehicle</p>
-              <p className="text-sm font-medium text-heading">
-                {dealCard.vehicle}
-              </p>
-            </div>
-            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 h-24 flex items-center justify-center text-xs text-muted">
-              Thumbnail
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="text-lg font-bold text-heading">{dealCard.value}</p>
-              <p className="text-xs text-muted">{dealCard.date}</p>
-            </div>
-            <div className="flex items-center justify-between text-xs text-muted">
-              <span>Salesperson</span>
-              <span className="font-medium text-heading">
-                {dealCard.salesperson}
-              </span>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs text-muted">
-                <span>Progress</span>
-                <span>{dealCard.progress}%</span>
+          <CardContent>
+            {featuredDeal ? (
+              <div className="space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-heading">
+                      {featuredDeal.customer}
+                    </h3>
+                    <p className="text-xs text-muted">
+                      #{featuredDeal.dealNumber ?? featuredDeal._id}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 capitalize">
+                    {featuredDeal.status}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-muted">Vehicle</p>
+                  <p className="text-sm font-medium text-heading">
+                    {featuredDeal.title}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-lg font-bold text-heading">
+                    {formatCurrency(featuredDeal.value)}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {new Date(featuredDeal.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <Button asChild className="w-full" variant="outline">
+                  <Link
+                    href={`/deals/${featuredDeal.dealNumber ?? featuredDeal._id}`}
+                  >
+                    View Details
+                  </Link>
+                </Button>
               </div>
-              <div className="h-2 rounded-full bg-gray-200">
-                <div
-                  className="h-2 rounded-full bg-blue-600"
-                  style={{ width: `${dealCard.progress}%` }}
-                />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center bg-gray-50 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  No active deals.
+                </p>
               </div>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-amber-600 font-medium">
-                Stuck {dealCard.stuckDays}d
-              </span>
-              <Link
-                href={`/deals/${dealCard.id}`}
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                View Deal
-              </Link>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -373,11 +351,15 @@ export default function DealsPage() {
           <CardTitle className="text-lg">Deals Pipeline</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
             {pipelineColumns.map((column) => (
               <div
                 key={column.id}
-                className="rounded-lg border border-gray-200 bg-gray-50 p-3 flex flex-col"
+                className={`rounded-lg border border-gray-200 bg-gray-50 p-3 flex flex-col ${
+                  createdStatus && column.id === "new"
+                    ? "ring-2 ring-blue-500 ring-offset-2"
+                    : ""
+                }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -389,30 +371,30 @@ export default function DealsPage() {
                     </p>
                   </div>
                   <div className="text-sm font-semibold text-primary">
-                    {column.total}
+                    {formatCurrency(column.total)}
                   </div>
                 </div>
 
                 <div className="mt-3 space-y-3">
                   {column.cards.map((card) => (
                     <div
-                      key={card.id}
+                      key={card._id}
                       className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
                     >
                       <p className="text-sm font-semibold text-heading">
                         {card.title}
                       </p>
-                      <p className="text-xs text-muted mt-1">{card.client}</p>
+                      <p className="text-xs text-muted mt-1">{card.customer}</p>
                       <div className="mt-2 flex items-center justify-between">
                         <span className="text-xs text-muted">Deal Value</span>
                         <span className="text-sm font-semibold text-heading">
-                          {card.value}
+                          {formatCurrency(card.value)}
                         </span>
                       </div>
                       <div className="mt-2 flex items-center justify-between">
                         <span className="text-xs text-muted">Details</span>
                         <Link
-                          href={`/deals/${card.id.toUpperCase()}`}
+                          href={`/deals/${card.dealNumber ?? card._id}`}
                           className="text-xs font-medium text-blue-600 hover:text-blue-700"
                         >
                           View Deal
@@ -420,6 +402,11 @@ export default function DealsPage() {
                       </div>
                     </div>
                   ))}
+                  {column.cards.length === 0 && (
+                    <div className="text-xs text-muted text-center py-4 italic">
+                      No deals
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Vehicle, VehicleFilters, VehicleStats } from "@/types/vehicle";
@@ -17,7 +16,6 @@ interface VehicleListingProps {
 }
 
 export function VehicleListing({ vehicles }: VehicleListingProps) {
-  const router = useRouter();
   const [items, setItems] = useState<Vehicle[]>(vehicles);
 
   useEffect(() => {
@@ -158,14 +156,6 @@ export function VehicleListing({ vehicles }: VehicleListingProps) {
     }
   };
 
-  const handleEdit = (vehicle: Vehicle) => {
-    router.push(`/inventory/${vehicle.id}/edit`);
-  };
-
-  const handleView = (vehicle: Vehicle) => {
-    router.push(`/inventory/${vehicle.id}`);
-  };
-
   const handleDelete = async (id: string) => {
     const previousItems = items;
     setItems((prev) => prev.filter((vehicle) => vehicle.id !== id));
@@ -304,8 +294,6 @@ export function VehicleListing({ vehicles }: VehicleListingProps) {
           vehicles={filteredVehicles}
           selectedVehicles={selectedVehicles}
           onSelectVehicle={handleSelectVehicle}
-          onEdit={handleEdit}
-          onView={handleView}
           onDelete={handleDelete}
         />
       ) : (
@@ -314,8 +302,6 @@ export function VehicleListing({ vehicles }: VehicleListingProps) {
           selectedVehicles={selectedVehicles}
           onSelectVehicle={handleSelectVehicle}
           onSelectAll={handleSelectAll}
-          onEdit={handleEdit}
-          onView={handleView}
           onDelete={handleDelete}
         />
       )}

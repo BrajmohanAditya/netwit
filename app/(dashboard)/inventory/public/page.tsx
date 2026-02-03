@@ -2,16 +2,47 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useMutation, useQuery } from "convex/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { api } from "@/convex/_generated/api";
+import type { Doc } from "@/convex/_generated/dataModel";
 
 export default function PurchaseFromPublicPage() {
   const [sellerType, setSellerType] = useState<"individual" | "company">(
     "individual",
   );
+  const [purchaseForm, setPurchaseForm] = useState({
+    vin: "",
+    year: "",
+    make: "",
+    model: "",
+    odometer: "",
+    condition: "",
+    purchaseDate: "",
+    purchasePrice: "",
+    source: "Walk-in",
+    notes: "",
+    sellerFirstName: "",
+    sellerLastName: "",
+    sellerCompany: "",
+    sellerContact: "",
+    sellerPhone: "",
+    sellerEmail: "",
+    sellerAddress: "",
+    acceptedBy: "",
+    internalNotes: "",
+  });
   const [historyFilters, setHistoryFilters] = useState({
     dateFrom: "",
     dateTo: "",
@@ -21,56 +52,12 @@ export default function PurchaseFromPublicPage() {
     staff: "",
   });
   const [selectedPurchases, setSelectedPurchases] = useState<string[]>([]);
+  const [selectedEntry, setSelectedEntry] =
+    useState<Doc<"purchaseHistory"> | null>(null);
 
-  const purchaseHistory = useMemo(
-    () => [
-      {
-        id: "PH-001",
-        date: "2026-01-20",
-        vehicle: "2020 Honda Civic LX",
-        vin: "2HGFC2F69LH000101",
-        price: 12850,
-        seller: "Jordan Miles",
-        sellerType: "Individual",
-        acceptedBy: "Agam",
-        status: "Completed",
-      },
-      {
-        id: "PH-002",
-        date: "2026-01-18",
-        vehicle: "2019 Ford Escape SE",
-        vin: "1FMCU0GD7KUA11321",
-        price: 15400,
-        seller: "Summit Auto Group",
-        sellerType: "Company",
-        acceptedBy: "Ava Carter",
-        status: "Pending Docs",
-      },
-      {
-        id: "PH-003",
-        date: "2026-01-12",
-        vehicle: "2021 Toyota Corolla LE",
-        vin: "5YFB4MDE6MP123456",
-        price: 14350,
-        seller: "Avery Chen",
-        sellerType: "Individual",
-        acceptedBy: "Noah Reed",
-        status: "Inspection",
-      },
-      {
-        id: "PH-004",
-        date: "2026-01-08",
-        vehicle: "2018 Jeep Wrangler Sport",
-        vin: "1C4GJXAG2JW102938",
-        price: 22500,
-        seller: "North Ridge Motors",
-        sellerType: "Company",
-        acceptedBy: "Agam",
-        status: "Completed",
-      },
-    ],
-    [],
-  );
+  const purchaseHistory = useQuery(api.purchaseHistory.get) ?? [];
+  const createPurchase = useMutation(api.purchaseHistory.create);
+  const deletePurchase = useMutation(api.purchaseHistory.deleteEntry);
 
   const filteredHistory = useMemo(() => {
     return purchaseHistory.filter((item) => {
@@ -107,14 +94,14 @@ export default function PurchaseFromPublicPage() {
 
   const isAllSelected =
     filteredHistory.length > 0 &&
-    filteredHistory.every((item) => selectedPurchases.includes(item.id));
+    filteredHistory.every((item) => selectedPurchases.includes(item._id));
 
   const toggleSelectAll = () => {
     if (isAllSelected) {
       setSelectedPurchases([]);
       return;
     }
-    setSelectedPurchases(filteredHistory.map((item) => item.id));
+    setSelectedPurchases(filteredHistory.map((item) => item._id));
   };
 
   const toggleSelection = (id: string) => {
@@ -125,7 +112,7 @@ export default function PurchaseFromPublicPage() {
 
   const exportCsv = () => {
     const rows = selectedPurchases.length
-      ? filteredHistory.filter((item) => selectedPurchases.includes(item.id))
+      ? filteredHistory.filter((item) => selectedPurchases.includes(item._id))
       : filteredHistory;
 
     if (rows.length === 0) return;
@@ -168,7 +155,7 @@ export default function PurchaseFromPublicPage() {
 
   const printForms = () => {
     const rows = selectedPurchases.length
-      ? filteredHistory.filter((item) => selectedPurchases.includes(item.id))
+      ? filteredHistory.filter((item) => selectedPurchases.includes(item._id))
       : filteredHistory;
 
     if (rows.length === 0) return;
@@ -236,6 +223,81 @@ export default function PurchaseFromPublicPage() {
     printWindow.print();
   };
 
+  const handleDeletePurchase = async (id: Doc<"purchaseHistory">["_id"]) => {
+    if (!confirm("Delete this purchase entry?")) return;
+    await deletePurchase({ id });
+    if (selectedEntry?._id === id) setSelectedEntry(null);
+  };
+
+  const handleCompletePurchase = async () => {
+    const sellerName =
+      sellerType === "company"
+        ? purchaseForm.sellerCompany.trim()
+        : `${purchaseForm.sellerFirstName.trim()} ${purchaseForm.sellerLastName.trim()}`.trim();
+
+    if (
+      !purchaseForm.vin.trim() ||
+      !purchaseForm.purchaseDate ||
+      !purchaseForm.purchasePrice
+    ) {
+      alert("VIN, purchase date, and purchase price are required.");
+      return;
+    }
+
+    if (!sellerName) {
+      alert("Seller information is required.");
+      return;
+    }
+
+    if (!purchaseForm.acceptedBy) {
+      alert("Please select Accepted By.");
+      return;
+    }
+
+    const vehicleLabel = [
+      purchaseForm.year,
+      purchaseForm.make,
+      purchaseForm.model,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    await createPurchase({
+      date: purchaseForm.purchaseDate,
+      vehicle: vehicleLabel || "Vehicle",
+      vin: purchaseForm.vin.trim(),
+      price: Number(purchaseForm.purchasePrice),
+      seller: sellerName,
+      sellerType: sellerType === "company" ? "Company" : "Individual",
+      acceptedBy: purchaseForm.acceptedBy,
+      status: "Completed",
+    });
+
+    setPurchaseForm({
+      vin: "",
+      year: "",
+      make: "",
+      model: "",
+      odometer: "",
+      condition: "",
+      purchaseDate: "",
+      purchasePrice: "",
+      source: "Walk-in",
+      notes: "",
+      sellerFirstName: "",
+      sellerLastName: "",
+      sellerCompany: "",
+      sellerContact: "",
+      sellerPhone: "",
+      sellerEmail: "",
+      sellerAddress: "",
+      acceptedBy: "",
+      internalNotes: "",
+    });
+    alert("Purchase completed and saved.");
+  };
+
   return (
     <div className="flex-1 space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -269,7 +331,17 @@ export default function PurchaseFromPublicPage() {
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                     VIN
                   </label>
-                  <Input placeholder="Enter VIN" className="mt-1" />
+                  <Input
+                    placeholder="Enter VIN"
+                    className="mt-1"
+                    value={purchaseForm.vin}
+                    onChange={(event) =>
+                      setPurchaseForm((prev) => ({
+                        ...prev,
+                        vin: event.target.value,
+                      }))
+                    }
+                  />
                 </div>
                 <div className="flex items-end">
                   <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
@@ -282,19 +354,49 @@ export default function PurchaseFromPublicPage() {
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                     Year
                   </label>
-                  <Input placeholder="Auto-filled" className="mt-1" disabled />
+                  <Input
+                    placeholder="Year"
+                    className="mt-1"
+                    value={purchaseForm.year}
+                    onChange={(event) =>
+                      setPurchaseForm((prev) => ({
+                        ...prev,
+                        year: event.target.value,
+                      }))
+                    }
+                  />
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                     Make
                   </label>
-                  <Input placeholder="Auto-filled" className="mt-1" disabled />
+                  <Input
+                    placeholder="Make"
+                    className="mt-1"
+                    value={purchaseForm.make}
+                    onChange={(event) =>
+                      setPurchaseForm((prev) => ({
+                        ...prev,
+                        make: event.target.value,
+                      }))
+                    }
+                  />
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                     Model
                   </label>
-                  <Input placeholder="Auto-filled" className="mt-1" disabled />
+                  <Input
+                    placeholder="Model"
+                    className="mt-1"
+                    value={purchaseForm.model}
+                    onChange={(event) =>
+                      setPurchaseForm((prev) => ({
+                        ...prev,
+                        model: event.target.value,
+                      }))
+                    }
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -302,13 +404,32 @@ export default function PurchaseFromPublicPage() {
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                     Odometer
                   </label>
-                  <Input placeholder="Enter mileage" className="mt-1" />
+                  <Input
+                    placeholder="Enter mileage"
+                    className="mt-1"
+                    value={purchaseForm.odometer}
+                    onChange={(event) =>
+                      setPurchaseForm((prev) => ({
+                        ...prev,
+                        odometer: event.target.value,
+                      }))
+                    }
+                  />
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                     Condition
                   </label>
-                  <Select className="mt-1">
+                  <Select
+                    className="mt-1"
+                    value={purchaseForm.condition}
+                    onChange={(event) =>
+                      setPurchaseForm((prev) => ({
+                        ...prev,
+                        condition: event.target.value,
+                      }))
+                    }
+                  >
                     <option value="">Select condition</option>
                     <option value="Excellent">Excellent</option>
                     <option value="Good">Good</option>
@@ -330,19 +451,48 @@ export default function PurchaseFromPublicPage() {
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                     Purchase Date
                   </label>
-                  <Input type="date" className="mt-1" />
+                  <Input
+                    type="date"
+                    className="mt-1"
+                    value={purchaseForm.purchaseDate}
+                    onChange={(event) =>
+                      setPurchaseForm((prev) => ({
+                        ...prev,
+                        purchaseDate: event.target.value,
+                      }))
+                    }
+                  />
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                     Purchase Price
                   </label>
-                  <Input placeholder="$0.00" className="mt-1" />
+                  <Input
+                    placeholder="$0.00"
+                    className="mt-1"
+                    value={purchaseForm.purchasePrice}
+                    onChange={(event) =>
+                      setPurchaseForm((prev) => ({
+                        ...prev,
+                        purchasePrice: event.target.value,
+                      }))
+                    }
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                     Source
                   </label>
-                  <Select className="mt-1">
+                  <Select
+                    className="mt-1"
+                    value={purchaseForm.source}
+                    onChange={(event) =>
+                      setPurchaseForm((prev) => ({
+                        ...prev,
+                        source: event.target.value,
+                      }))
+                    }
+                  >
                     <option value="Walk-in">Walk-in</option>
                     <option value="Phone">Phone</option>
                     <option value="Online">Online</option>
@@ -356,6 +506,13 @@ export default function PurchaseFromPublicPage() {
                     className="mt-1 w-full rounded-lg border border-gray-200 p-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                     rows={4}
                     placeholder="Add purchase notes"
+                    value={purchaseForm.notes}
+                    onChange={(event) =>
+                      setPurchaseForm((prev) => ({
+                        ...prev,
+                        notes: event.target.value,
+                      }))
+                    }
                   />
                 </div>
               </div>
@@ -396,31 +553,81 @@ export default function PurchaseFromPublicPage() {
                     <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                       First Name
                     </label>
-                    <Input placeholder="First name" className="mt-1" />
+                    <Input
+                      placeholder="First name"
+                      className="mt-1"
+                      value={purchaseForm.sellerFirstName}
+                      onChange={(event) =>
+                        setPurchaseForm((prev) => ({
+                          ...prev,
+                          sellerFirstName: event.target.value,
+                        }))
+                      }
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                       Last Name
                     </label>
-                    <Input placeholder="Last name" className="mt-1" />
+                    <Input
+                      placeholder="Last name"
+                      className="mt-1"
+                      value={purchaseForm.sellerLastName}
+                      onChange={(event) =>
+                        setPurchaseForm((prev) => ({
+                          ...prev,
+                          sellerLastName: event.target.value,
+                        }))
+                      }
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                       Phone
                     </label>
-                    <Input placeholder="(604) 123-4567" className="mt-1" />
+                    <Input
+                      placeholder="(604) 123-4567"
+                      className="mt-1"
+                      value={purchaseForm.sellerPhone}
+                      onChange={(event) =>
+                        setPurchaseForm((prev) => ({
+                          ...prev,
+                          sellerPhone: event.target.value,
+                        }))
+                      }
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                       Email
                     </label>
-                    <Input placeholder="name@example.com" className="mt-1" />
+                    <Input
+                      placeholder="name@example.com"
+                      className="mt-1"
+                      value={purchaseForm.sellerEmail}
+                      onChange={(event) =>
+                        setPurchaseForm((prev) => ({
+                          ...prev,
+                          sellerEmail: event.target.value,
+                        }))
+                      }
+                    />
                   </div>
                   <div className="md:col-span-2">
                     <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                       Address
                     </label>
-                    <Input placeholder="Street address" className="mt-1" />
+                    <Input
+                      placeholder="Street address"
+                      className="mt-1"
+                      value={purchaseForm.sellerAddress}
+                      onChange={(event) =>
+                        setPurchaseForm((prev) => ({
+                          ...prev,
+                          sellerAddress: event.target.value,
+                        }))
+                      }
+                    />
                   </div>
                 </div>
               ) : (
@@ -429,25 +636,65 @@ export default function PurchaseFromPublicPage() {
                     <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                       Company Name
                     </label>
-                    <Input placeholder="Company name" className="mt-1" />
+                    <Input
+                      placeholder="Company name"
+                      className="mt-1"
+                      value={purchaseForm.sellerCompany}
+                      onChange={(event) =>
+                        setPurchaseForm((prev) => ({
+                          ...prev,
+                          sellerCompany: event.target.value,
+                        }))
+                      }
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                       Contact Person
                     </label>
-                    <Input placeholder="Contact person" className="mt-1" />
+                    <Input
+                      placeholder="Contact person"
+                      className="mt-1"
+                      value={purchaseForm.sellerContact}
+                      onChange={(event) =>
+                        setPurchaseForm((prev) => ({
+                          ...prev,
+                          sellerContact: event.target.value,
+                        }))
+                      }
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                       Phone
                     </label>
-                    <Input placeholder="(604) 123-4567" className="mt-1" />
+                    <Input
+                      placeholder="(604) 123-4567"
+                      className="mt-1"
+                      value={purchaseForm.sellerPhone}
+                      onChange={(event) =>
+                        setPurchaseForm((prev) => ({
+                          ...prev,
+                          sellerPhone: event.target.value,
+                        }))
+                      }
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                       Email
                     </label>
-                    <Input placeholder="name@example.com" className="mt-1" />
+                    <Input
+                      placeholder="name@example.com"
+                      className="mt-1"
+                      value={purchaseForm.sellerEmail}
+                      onChange={(event) =>
+                        setPurchaseForm((prev) => ({
+                          ...prev,
+                          sellerEmail: event.target.value,
+                        }))
+                      }
+                    />
                   </div>
                 </div>
               )}
@@ -497,7 +744,16 @@ export default function PurchaseFromPublicPage() {
                 <label className="text-xs font-semibold uppercase tracking-wide text-muted">
                   Accepted By
                 </label>
-                <Select className="mt-1">
+                <Select
+                  className="mt-1"
+                  value={purchaseForm.acceptedBy}
+                  onChange={(event) =>
+                    setPurchaseForm((prev) => ({
+                      ...prev,
+                      acceptedBy: event.target.value,
+                    }))
+                  }
+                >
                   <option value="">Select staff</option>
                   <option value="Agam">Agam</option>
                   <option value="Ava Carter">Ava Carter</option>
@@ -512,6 +768,13 @@ export default function PurchaseFromPublicPage() {
                   className="mt-1 w-full rounded-lg border border-gray-200 p-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   rows={4}
                   placeholder="Add internal notes"
+                  value={purchaseForm.internalNotes}
+                  onChange={(event) =>
+                    setPurchaseForm((prev) => ({
+                      ...prev,
+                      internalNotes: event.target.value,
+                    }))
+                  }
                 />
               </div>
               <div className="space-y-3">
@@ -543,7 +806,10 @@ export default function PurchaseFromPublicPage() {
           <Button variant="outline">Cancel</Button>
         </Link>
         <Button variant="outline">Save Draft</Button>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={handleCompletePurchase}
+        >
           Complete Purchase
         </Button>
       </div>
@@ -700,11 +966,11 @@ export default function PurchaseFromPublicPage() {
               </thead>
               <tbody>
                 {filteredHistory.map((item) => (
-                  <tr key={item.id} className="border-b border-gray-100">
+                  <tr key={item._id} className="border-b border-gray-100">
                     <td className="py-3 pr-4">
                       <Checkbox
-                        checked={selectedPurchases.includes(item.id)}
-                        onChange={() => toggleSelection(item.id)}
+                        checked={selectedPurchases.includes(item._id)}
+                        onChange={() => toggleSelection(item._id)}
                         aria-label={`Select ${item.vehicle}`}
                       />
                     </td>
@@ -731,9 +997,20 @@ export default function PurchaseFromPublicPage() {
                       </span>
                     </td>
                     <td className="py-3">
-                      <button className="text-blue-600 hover:text-blue-700 text-xs font-medium">
-                        View
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          className="text-blue-600 hover:text-blue-700 text-xs font-medium"
+                          onClick={() => setSelectedEntry(item)}
+                        >
+                          View
+                        </button>
+                        <button
+                          className="text-red-600 hover:text-red-700 text-xs font-medium"
+                          onClick={() => handleDeletePurchase(item._id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -747,6 +1024,81 @@ export default function PurchaseFromPublicPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={!!selectedEntry}
+        onOpenChange={(open) => !open && setSelectedEntry(null)}
+      >
+        <DialogContent className="max-w-[560px] w-[95vw]">
+          <DialogHeader>
+            <DialogTitle>Purchase Details</DialogTitle>
+            <DialogDescription>
+              Review the selected purchase entry.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedEntry && (
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-muted">Vehicle</div>
+                  <div className="font-medium text-heading">
+                    {selectedEntry.vehicle}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted">Date</div>
+                  <div className="font-medium text-heading">
+                    {selectedEntry.date}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted">VIN</div>
+                  <div className="font-medium text-heading">
+                    {selectedEntry.vin}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted">Price</div>
+                  <div className="font-medium text-heading">
+                    ${selectedEntry.price.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-muted">Seller</div>
+                  <div className="font-medium text-heading">
+                    {selectedEntry.seller}
+                  </div>
+                  <div className="text-xs text-muted">
+                    {selectedEntry.sellerType}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted">Accepted By</div>
+                  <div className="font-medium text-heading">
+                    {selectedEntry.acceptedBy}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-muted">Status</div>
+                  <div className="font-medium text-heading">
+                    {selectedEntry.status}
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedEntry(null)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

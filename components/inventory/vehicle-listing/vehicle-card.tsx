@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Trash2, Eye, Edit2, Fuel, Zap } from "lucide-react";
 import { Vehicle } from "@/types/vehicle";
 
@@ -8,8 +9,6 @@ interface VehicleCardProps {
   vehicle: Vehicle;
   isSelected: boolean;
   onSelect: (id: string, selected: boolean) => void;
-  onEdit: (vehicle: Vehicle) => void;
-  onView: (vehicle: Vehicle) => void;
   onDelete: (id: string) => void;
 }
 
@@ -17,8 +16,6 @@ export function VehicleCard({
   vehicle,
   isSelected,
   onSelect,
-  onEdit,
-  onView,
   onDelete,
 }: VehicleCardProps) {
   const formatCurrency = (value: number) => {
@@ -124,20 +121,20 @@ export function VehicleCard({
 
         {/* Actions - Show on Hover */}
         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity pt-2 border-t border-gray-100">
-          <button
-            onClick={() => onEdit(vehicle)}
+          <Link
+            href={`/inventory/${vehicle.id}/edit`}
             className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded transition-colors"
           >
             <Edit2 className="h-4 w-4" />
             Edit
-          </button>
-          <button
-            onClick={() => onView(vehicle)}
+          </Link>
+          <Link
+            href={`/inventory/${vehicle.id}`}
             className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded transition-colors"
           >
             <Eye className="h-4 w-4" />
             View
-          </button>
+          </Link>
           <button
             onClick={() => onDelete(vehicle.id)}
             className="px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded transition-colors"

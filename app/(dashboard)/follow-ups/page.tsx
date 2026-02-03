@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calendar, Mail, MessageCircle, Phone, Plus } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { api } from "@/convex/_generated/api";
+import type { Doc } from "@/convex/_generated/dataModel";
 import {
   Dialog,
   DialogContent,
@@ -49,57 +52,6 @@ interface FollowUpItem {
   notes: string;
 }
 
-const followUps: FollowUpItem[] = [
-  {
-    id: "fu-1",
-    customer: "Amelia Brooks",
-    lead: "2025 Audi Q5",
-    dueDate: "Jan 25, 2026",
-    time: "10:00 AM",
-    channel: "Call",
-    assignedTo: "Jamie Lee",
-    status: "Due",
-    priority: "High",
-    notes: "Confirm test drive availability",
-  },
-  {
-    id: "fu-2",
-    customer: "Caleb Owens",
-    lead: "2026 BMW X3",
-    dueDate: "Jan 25, 2026",
-    time: "2:00 PM",
-    channel: "Email",
-    assignedTo: "Alex Martinez",
-    status: "Scheduled",
-    priority: "Medium",
-    notes: "Send pricing proposal",
-  },
-  {
-    id: "fu-3",
-    customer: "Harper Sloan",
-    lead: "2025 Lexus RX",
-    dueDate: "Jan 24, 2026",
-    time: "4:00 PM",
-    channel: "SMS",
-    assignedTo: "Sam Patel",
-    status: "Completed",
-    priority: "Low",
-    notes: "Post-drive feedback",
-  },
-  {
-    id: "fu-4",
-    customer: "Noah Chen",
-    lead: "2025 Tesla Model Y",
-    dueDate: "Jan 23, 2026",
-    time: "11:30 AM",
-    channel: "Visit",
-    assignedTo: "Jamie Lee",
-    status: "Overdue",
-    priority: "High",
-    notes: "Trade-in appraisal pending",
-  },
-];
-
 const initials = (name: string) =>
   name
     .split(" ")
@@ -109,6 +61,11 @@ const initials = (name: string) =>
     .toUpperCase();
 
 export default function FollowUpsPage() {
+  const followUpsQuery = useQuery(api.followUps.get);
+  const createFollowUp = useMutation(api.followUps.create);
+  const deleteFollowUp = useMutation(api.followUps.deleteFollowUp);
+  const updateStatus = useMutation(api.followUps.updateStatus);
+  const followUps = followUpsQuery ?? [];
   const [filters, setFilters] = useState({
     status: "",
     channel: "",
@@ -116,6 +73,99 @@ export default function FollowUpsPage() {
     search: "",
   });
   const [isNewFollowUpOpen, setIsNewFollowUpOpen] = useState(false);
+  const [selectedFollowUp, setSelectedFollowUp] =
+    useState<Doc<"followUps"> | null>(null);
+  const [newFollowUp, setNewFollowUp] = useState({
+    customer: "",
+    lead: "",
+    dueDate: "",
+    time: "",
+    channel: "Call" as FollowUpChannel,
+    assignedTo: "Jamie Lee",
+    priority: "Medium" as const,
+    notes: "",
+    status: "Scheduled" as FollowUpStatus,
+  });
+
+  const filteredFollowUps = useMemo(() => {
+    const search = filters.search.trim().toLowerCase();
+    return followUps.filter((followUp) => {
+      if (filters.status && followUp.status !== filters.status) return false;
+      if (filters.channel && followUp.channel !== filters.channel) return false;
+      if (filters.assigned && followUp.assignedTo !== filters.assigned)
+        return false;
+      if (!search) return true;
+      return (
+        followUp.customer.toLowerCase().includes(search) ||
+        followUp.lead.toLowerCase().includes(search)
+      );
+    });
+  }, [filters, followUps]);
+
+  const stats = useMemo(() => {
+    const counts = {
+      Due: 0,
+      Scheduled: 0,
+      Completed: 0,
+      Overdue: 0,
+    };
+
+    followUps.forEach((followUp) => {
+      if (followUp.status in counts) {
+        counts[followUp.status as keyof typeof counts] += 1;
+      }
+    });
+
+    return [
+      { label: "Due Today", value: counts.Due, accent: "bg-yellow-50" },
+      { label: "Scheduled", value: counts.Scheduled, accent: "bg-blue-50" },
+      { label: "Completed", value: counts.Completed, accent: "bg-green-50" },
+      { label: "Overdue", value: counts.Overdue, accent: "bg-red-50" },
+    ];
+  }, [followUps]);
+
+  const handleDelete = async (id: Doc<"followUps">["_id"]) => {
+    if (confirm("Are you sure you want to delete this follow-up?")) {
+      await deleteFollowUp({ id });
+      if (selectedFollowUp?._id === id) setSelectedFollowUp(null);
+    }
+  };
+
+  const handleComplete = async (id: Doc<"followUps">["_id"]) => {
+    await updateStatus({ id, status: "Completed" });
+  };
+
+  const handleCreateFollowUp = async () => {
+    if (!newFollowUp.customer.trim() || !newFollowUp.lead.trim()) {
+      alert("Customer and lead are required.");
+      return;
+    }
+
+    await createFollowUp({
+      customer: newFollowUp.customer.trim(),
+      lead: newFollowUp.lead.trim(),
+      dueDate: newFollowUp.dueDate || "TBD",
+      time: newFollowUp.time || "TBD",
+      channel: newFollowUp.channel,
+      assignedTo: newFollowUp.assignedTo,
+      status: newFollowUp.status,
+      priority: newFollowUp.priority,
+      notes: newFollowUp.notes.trim() || "No notes",
+    });
+
+    setIsNewFollowUpOpen(false);
+    setNewFollowUp({
+      customer: "",
+      lead: "",
+      dueDate: "",
+      time: "",
+      channel: "Call",
+      assignedTo: "Jamie Lee",
+      priority: "Medium",
+      notes: "",
+      status: "Scheduled",
+    });
+  };
 
   return (
     <div className="flex-1 space-y-6 px-6 py-6">
@@ -202,12 +252,7 @@ export default function FollowUpsPage() {
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: "Due Today", value: 6, accent: "bg-yellow-50" },
-          { label: "Scheduled", value: 14, accent: "bg-blue-50" },
-          { label: "Completed", value: 42, accent: "bg-green-50" },
-          { label: "Overdue", value: 3, accent: "bg-red-50" },
-        ].map((stat) => (
+        {stats.map((stat) => (
           <Card key={stat.label}>
             <CardContent className={cn("space-y-2", stat.accent)}>
               <div className="text-sm text-muted-foreground">{stat.label}</div>
@@ -229,13 +274,59 @@ export default function FollowUpsPage() {
           </DialogHeader>
           <div className="grid gap-4">
             <div className="grid gap-3 md:grid-cols-2">
-              <Input placeholder="Customer name" />
-              <Input placeholder="Lead / Vehicle" />
-              <Input type="date" placeholder="Due date" />
-              <Input type="time" placeholder="Time" />
+              <Input
+                placeholder="Customer name"
+                value={newFollowUp.customer}
+                onChange={(event) =>
+                  setNewFollowUp((prev) => ({
+                    ...prev,
+                    customer: event.target.value,
+                  }))
+                }
+              />
+              <Input
+                placeholder="Lead / Vehicle"
+                value={newFollowUp.lead}
+                onChange={(event) =>
+                  setNewFollowUp((prev) => ({
+                    ...prev,
+                    lead: event.target.value,
+                  }))
+                }
+              />
+              <Input
+                type="date"
+                placeholder="Due date"
+                value={newFollowUp.dueDate}
+                onChange={(event) =>
+                  setNewFollowUp((prev) => ({
+                    ...prev,
+                    dueDate: event.target.value,
+                  }))
+                }
+              />
+              <Input
+                type="time"
+                placeholder="Time"
+                value={newFollowUp.time}
+                onChange={(event) =>
+                  setNewFollowUp((prev) => ({
+                    ...prev,
+                    time: event.target.value,
+                  }))
+                }
+              />
             </div>
             <div className="grid gap-3 md:grid-cols-3">
-              <Select defaultValue="Call">
+              <Select
+                value={newFollowUp.channel}
+                onChange={(event) =>
+                  setNewFollowUp((prev) => ({
+                    ...prev,
+                    channel: event.target.value as FollowUpChannel,
+                  }))
+                }
+              >
                 {(["Call", "Email", "SMS", "Visit"] as FollowUpChannel[]).map(
                   (channel) => (
                     <option key={channel} value={channel}>
@@ -244,14 +335,30 @@ export default function FollowUpsPage() {
                   ),
                 )}
               </Select>
-              <Select defaultValue="Medium">
+              <Select
+                value={newFollowUp.priority}
+                onChange={(event) =>
+                  setNewFollowUp((prev) => ({
+                    ...prev,
+                    priority: event.target.value as "High" | "Medium" | "Low",
+                  }))
+                }
+              >
                 {(["High", "Medium", "Low"] as const).map((priority) => (
                   <option key={priority} value={priority}>
                     {priority}
                   </option>
                 ))}
               </Select>
-              <Select defaultValue="Jamie Lee">
+              <Select
+                value={newFollowUp.assignedTo}
+                onChange={(event) =>
+                  setNewFollowUp((prev) => ({
+                    ...prev,
+                    assignedTo: event.target.value,
+                  }))
+                }
+              >
                 {["Jamie Lee", "Alex Martinez", "Sam Patel"].map((name) => (
                   <option key={name} value={name}>
                     {name}
@@ -259,16 +366,134 @@ export default function FollowUpsPage() {
                 ))}
               </Select>
             </div>
-            <Input placeholder="Notes" />
+            <Input
+              placeholder="Notes"
+              value={newFollowUp.notes}
+              onChange={(event) =>
+                setNewFollowUp((prev) => ({
+                  ...prev,
+                  notes: event.target.value,
+                }))
+              }
+            />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setIsNewFollowUpOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => setIsNewFollowUpOpen(false)}>
-              Create Follow-up
-            </Button>
+            <Button onClick={handleCreateFollowUp}>Create Follow-up</Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!selectedFollowUp}
+        onOpenChange={(open) => !open && setSelectedFollowUp(null)}
+      >
+        <DialogContent className="max-w-[600px] w-[95vw]">
+          <DialogHeader>
+            <DialogTitle>Follow-up Details</DialogTitle>
+            <DialogDescription>
+              View details for this interaction.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedFollowUp && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Customer
+                  </div>
+                  <div className="font-semibold text-lg">
+                    {selectedFollowUp.customer}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Status
+                  </div>
+                  <Badge
+                    className={cn(
+                      "border border-transparent",
+                      followUpStatuses[selectedFollowUp.status],
+                    )}
+                  >
+                    {selectedFollowUp.status}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Lead Interest
+                  </div>
+                  <div>{selectedFollowUp.lead}</div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Assigned To
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarFallback className="text-[10px]">
+                        {initials(selectedFollowUp.assignedTo)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>{selectedFollowUp.assignedTo}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-muted-foreground uppercase">
+                    Due Date
+                  </div>
+                  <div className="font-medium text-sm">
+                    {selectedFollowUp.dueDate}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-muted-foreground uppercase">
+                    Time
+                  </div>
+                  <div className="font-medium text-sm">
+                    {selectedFollowUp.time}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-muted-foreground uppercase">
+                    Channel
+                  </div>
+                  <div className="font-medium text-sm flex items-center gap-2">
+                    {selectedFollowUp.channel}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-muted-foreground">
+                  Notes
+                </div>
+                <div className="p-4 rounded-md border text-sm bg-white">
+                  {selectedFollowUp.notes}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedFollowUp(null)}
+                >
+                  Close
+                </Button>
+                <Button onClick={() => handleComplete(selectedFollowUp._id)}>
+                  Mark Complete
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -288,8 +513,8 @@ export default function FollowUpsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {followUps.map((followUp) => (
-                <TableRow key={followUp.id}>
+              {filteredFollowUps.map((followUp) => (
+                <TableRow key={followUp._id}>
                   <TableCell className="font-medium">
                     {followUp.customer}
                   </TableCell>
@@ -344,11 +569,27 @@ export default function FollowUpsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedFollowUp(followUp)}
+                      >
                         View
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleComplete(followUp._id)}
+                      >
                         Complete
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleDelete(followUp._id)}
+                      >
+                        Delete
                       </Button>
                     </div>
                   </TableCell>

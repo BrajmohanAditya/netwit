@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery } from "convex/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { api } from "@/convex/_generated/api";
 
 const mockDeal = {
   id: "D-042",
@@ -58,7 +63,59 @@ export default function DealDetailsPage({
 }: {
   params: { id: string };
 }) {
-  const dealId = params?.id ? params.id.toUpperCase() : mockDeal.id;
+  const router = useRouter();
+  const deal = useQuery(api.deals.getByIdOrNumber, { id: params.id });
+  const deleteDeal = useMutation(api.deals.deleteDeal);
+
+  if (deal === undefined) {
+    return (
+      <div className="flex-1 space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8">
+        <div className="text-sm text-muted-foreground">Loading deal...</div>
+      </div>
+    );
+  }
+
+  if (deal === null) {
+    return (
+      <div className="flex-1 space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8">
+        <div className="text-sm text-muted-foreground">Deal not found.</div>
+        <Link
+          href="/deals"
+          className="text-sm text-blue-600 hover:text-blue-700"
+        >
+          ← Back to Deals
+        </Link>
+      </div>
+    );
+  }
+
+  const formatStatus = (status: string) =>
+    status
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+
+  const dealId = deal.dealNumber ?? deal._id.toString();
+  const dealData = {
+    ...mockDeal,
+    id: dealId,
+    status: formatStatus(deal.status),
+    customer: {
+      ...mockDeal.customer,
+      name: deal.customer,
+    },
+    vehicle: {
+      ...mockDeal.vehicle,
+      name: deal.title,
+      meta: `Value: $${deal.value.toLocaleString()}`,
+    },
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("Delete this deal? This cannot be undone.")) return;
+    await deleteDeal({ id: deal._id });
+    router.push("/deals");
+  };
 
   return (
     <div className="flex-1 space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8">
@@ -71,7 +128,7 @@ export default function DealDetailsPage({
                 Deal #{dealId}
               </h1>
               <Badge className="bg-blue-100 text-blue-700 border-0">
-                {mockDeal.status}
+                {dealData.status}
               </Badge>
             </div>
             <p className="text-sm text-muted mt-1">Deal details and activity</p>
@@ -79,8 +136,11 @@ export default function DealDetailsPage({
           <div className="flex flex-wrap gap-2">
             <Button variant="outline">Edit</Button>
             <Button variant="outline">Move Stage</Button>
-            <Button className="bg-red-600 hover:bg-red-700 text-white">
-              Cancel
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={handleDelete}
+            >
+              Delete
             </Button>
           </div>
         </div>
@@ -100,9 +160,9 @@ export default function DealDetailsPage({
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-xl font-semibold text-heading">
-              {mockDeal.customer.name}
+              {dealData.customer.name}
             </p>
-            <p className="text-sm text-muted">{mockDeal.customer.meta}</p>
+            <p className="text-sm text-muted">{dealData.customer.meta}</p>
             <Button variant="outline" size="sm">
               Profile
             </Button>
@@ -115,9 +175,9 @@ export default function DealDetailsPage({
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-xl font-semibold text-heading">
-              {mockDeal.vehicle.name}
+              {dealData.vehicle.name}
             </p>
-            <p className="text-sm text-muted">{mockDeal.vehicle.meta}</p>
+            <p className="text-sm text-muted">{dealData.vehicle.meta}</p>
             <Button variant="outline" size="sm">
               Details
             </Button>
@@ -132,7 +192,7 @@ export default function DealDetailsPage({
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            {mockDeal.timeline.map((step, index) => (
+            {dealData.timeline.map((step, index) => (
               <div key={step.label} className="flex items-center gap-3">
                 <div className="h-3 w-3 rounded-full bg-blue-600" />
                 <div>
@@ -141,7 +201,7 @@ export default function DealDetailsPage({
                   </p>
                   <p className="text-xs text-muted">{step.date}</p>
                 </div>
-                {index < mockDeal.timeline.length - 1 && (
+                {index < dealData.timeline.length - 1 && (
                   <div className="hidden sm:block h-px w-12 bg-gray-200" />
                 )}
               </div>
@@ -167,7 +227,7 @@ export default function DealDetailsPage({
                 <CardTitle className="text-base">Financial Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                {mockDeal.financialSummary.map((item) => (
+                {dealData.financialSummary.map((item) => (
                   <div
                     key={item.label}
                     className="flex items-center justify-between"
@@ -186,7 +246,7 @@ export default function DealDetailsPage({
                 <CardTitle className="text-base">Financing Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                {mockDeal.financingDetails.map((item) => (
+                {dealData.financingDetails.map((item) => (
                   <div
                     key={item.label}
                     className="flex items-center justify-between"
