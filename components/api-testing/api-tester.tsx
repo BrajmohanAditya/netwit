@@ -73,7 +73,7 @@ export function ApiTester({ endpoint }: ApiTesterProps) {
               >
                 {endpoint.method}
               </Badge>
-              <Badge variant="gray" className="text-xs">
+              <Badge variant="secondary" className="text-xs">
                 {endpoint.category}
               </Badge>
             </div>
