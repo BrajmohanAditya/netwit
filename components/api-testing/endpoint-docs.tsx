@@ -106,11 +106,14 @@ export function EndpointDocs({ endpoints }: EndpointDocsProps) {
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2">
                       <h4 className="font-semibold">{endpoint.name}</h4>
-                      <Badge variant="gray" className="text-xs">
+                      <Badge variant="secondary" className="text-xs">
                         {endpoint.method}
                       </Badge>
                       {endpoint.requiresAuth && (
-                        <Badge variant="yellow" className="text-xs">
+                        <Badge
+                          variant="secondary"
+                          className="text-xs bg-yellow-100 text-yellow-800"
+                        >
                           <Lock className="h-3 w-3 mr-1" />
                           Auth Required
                         </Badge>
@@ -121,10 +124,12 @@ export function EndpointDocs({ endpoints }: EndpointDocsProps) {
                     </code>
                   </div>
                   <Badge
-                    variant={
-                      endpoint.category === "Server Action" ? "blue" : "gray"
+                    variant="secondary"
+                    className={
+                      endpoint.category === "Server Action"
+                        ? "ml-2 bg-blue-100 text-blue-800"
+                        : "ml-2"
                     }
-                    className="ml-2"
                   >
                     {endpoint.category}
                   </Badge>
