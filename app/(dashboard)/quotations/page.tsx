@@ -93,7 +93,7 @@ export default function QuotationsPage() {
     if (selectedIds.length === filteredQuotes.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(filteredQuotes.map((q) => q.id));
+      setSelectedIds(filteredQuotes.map((q) => q._id));
     }
   };
 
