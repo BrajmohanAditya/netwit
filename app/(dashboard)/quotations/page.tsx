@@ -67,7 +67,7 @@ export default function QuotationsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const quotesQuery = useQuery(api.quotations.get);
   const createQuote = useMutation(api.quotations.create);
-  const quotes = quotesQuery ?? [];
+  const quotes = useMemo(() => quotesQuery ?? [], [quotesQuery]);
   const [formData, setFormData] = useState({
     customer: "",
     customerEmail: "",

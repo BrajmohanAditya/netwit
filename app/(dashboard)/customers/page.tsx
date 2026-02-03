@@ -34,7 +34,7 @@ export default function CustomersPage() {
   const customersQuery = useQuery(api.customers.get);
   const createCustomer = useMutation(api.customers.create);
   const deleteCustomer = useMutation(api.customers.deleteCustomer);
-  const customers = customersQuery ?? [];
+  const customers = useMemo(() => customersQuery ?? [], [customersQuery]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [filters, setFilters] = useState({
     type: "",

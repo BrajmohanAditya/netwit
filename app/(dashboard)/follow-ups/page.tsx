@@ -67,7 +67,7 @@ export default function FollowUpsPage() {
   const createFollowUp = useMutation(api.followUps.create);
   const deleteFollowUp = useMutation(api.followUps.deleteFollowUp);
   const updateStatus = useMutation(api.followUps.updateStatus);
-  const followUps = followUpsQuery ?? [];
+  const followUps = useMemo(() => followUpsQuery ?? [], [followUpsQuery]);
   const [filters, setFilters] = useState({
     status: "",
     channel: "",
@@ -417,7 +417,9 @@ export default function FollowUpsPage() {
                   <Badge
                     className={cn(
                       "border border-transparent",
-                      followUpStatuses[selectedFollowUp.status],
+                      followUpStatuses[
+                        selectedFollowUp.status as FollowUpStatus
+                      ],
                     )}
                   >
                     {selectedFollowUp.status}

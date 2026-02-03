@@ -55,7 +55,11 @@ export default function PurchaseFromPublicPage() {
   const [selectedEntry, setSelectedEntry] =
     useState<Doc<"purchaseHistory"> | null>(null);
 
-  const purchaseHistory = useQuery(api.purchaseHistory.get) ?? [];
+  const purchaseHistoryQuery = useQuery(api.purchaseHistory.get);
+  const purchaseHistory = useMemo(
+    () => purchaseHistoryQuery ?? [],
+    [purchaseHistoryQuery],
+  );
   const createPurchase = useMutation(api.purchaseHistory.create);
   const deletePurchase = useMutation(api.purchaseHistory.deleteEntry);
 
