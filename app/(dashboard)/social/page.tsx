@@ -218,7 +218,7 @@ export default function SocialPostingPage() {
               {facebookConnected ? (
                 <Badge className="bg-green-100 text-green-700">Connected</Badge>
               ) : (
-                <Badge variant="gray">Not Connected</Badge>
+                <Badge variant="secondary">Not Connected</Badge>
               )}
             </CardHeader>
             <CardContent className="space-y-4">
@@ -394,8 +394,9 @@ export default function SocialPostingPage() {
                     <td className="py-3 pr-4 text-gray-700">{post.platform}</td>
                     <td className="py-3 pr-4">
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${statusBadgeStyles[post.status]
-                          }`}
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+                          statusBadgeStyles[post.status]
+                        }`}
                       >
                         {post.status}
                       </span>
