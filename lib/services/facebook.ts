@@ -9,7 +9,7 @@ interface FacebookPostResponse {
 }
 
 export async function postVehicleToFacebook(vehicleId: string): Promise<FacebookPostResponse> {
-  const supabase = await createClient();
+  const supabase = createClient();
   
   // Fetch vehicle data
   const { data: vehicle, error: vehicleError } = await supabase

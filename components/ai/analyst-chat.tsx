@@ -41,26 +41,48 @@ export function AnalystChat() {
       let assistantMessage = { id: (Date.now() + 1).toString(), role: 'assistant' as const, content: '' };
       setMessages(prev => [...prev, assistantMessage]);
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      const timeout = setTimeout(() => {
+        reader.cancel();
+        throw new Error('Streaming timeout after 30 seconds');
+      }, 30000);
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n').filter(line => line.trim());
+      try {
+        while (true) {
+          const result = await Promise.race([
+            reader.read(),
+            new Promise<ReadableStreamReadResult<Uint8Array>>((_, reject) => 
+              setTimeout(() => reject(new Error('Read timeout')), 5000)
+            )
+          ]);
+          const { done, value } = result as ReadableStreamReadResult<Uint8Array>;
+          
+          if (done) break;
 
-        for (const line of lines) {
-          if (line.startsWith('0:')) {
-            const data = JSON.parse(line.slice(2));
-            if (data.type === 'text-delta') {
-              assistantMessage.content += data.textDelta;
-              setMessages(prev => {
-                const updated = [...prev];
-                updated[updated.length - 1] = { ...assistantMessage };
-                return updated;
-              });
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n').filter(line => line.trim());
+
+          for (const line of lines) {
+            if (line.startsWith('0:')) {
+              try {
+                const data = JSON.parse(line.slice(2));
+                if (data.type === 'text-delta') {
+                  assistantMessage.content += data.textDelta;
+                  setMessages(prev => {
+                    const updated = [...prev];
+                    updated[updated.length - 1] = { ...assistantMessage };
+                    return updated;
+                  });
+                }
+              } catch (parseError) {
+                console.warn('Failed to parse streaming data:', line);
+              }
             }
           }
         }
+        clearTimeout(timeout);
+      } catch (streamError) {
+        clearTimeout(timeout);
+        throw streamError;
       }
     } catch (error) {
       console.error('Chat error:', error);

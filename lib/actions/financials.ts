@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 
 export async function getFinancialTransactions() {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   // Fetch sales deals (money in)
   const { data: sales, error: salesError } = await supabase

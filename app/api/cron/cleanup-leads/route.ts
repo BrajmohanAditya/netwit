@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     // Calculate date 30 days ago
     const thirtyDaysAgo = new Date();

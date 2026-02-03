@@ -48,12 +48,12 @@ const mockClient = {
     },
 } as any;
 
-async function createClient() {
+function createClient() {
     return mockClient;
 }
 
 export async function getRecentLeadsDebug(limit: number = 5) {
-    const supabase = await createClient();
+    const supabase = createClient();
 
     if (!supabase) {
         throw new Error("Supabase client is null/undefined");

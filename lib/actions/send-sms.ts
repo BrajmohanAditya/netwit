@@ -13,7 +13,7 @@ const twilioClient = accountSid && authToken
   : null;
 
 export async function sendLeadSms(leadId: string, message: string) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   // Fetch lead with customer
   const { data: lead, error: leadError } = await supabase

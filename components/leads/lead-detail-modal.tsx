@@ -45,7 +45,7 @@ export function LeadDetailModal({
             <div className="space-y-1">
               <h2 className="text-xl font-semibold">Lead Details</h2>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Badge variant="blue" radius="pill">
+                <Badge variant="secondary">
                   {sourceLabel}
                 </Badge>
                 <span>Created {createdLabel}</span>

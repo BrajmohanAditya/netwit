@@ -30,7 +30,7 @@ const queryDatabaseTool = tool({
         return { error: 'Query contains forbidden keywords' };
       }
 
-      const supabase = await createClient();
+      const supabase = createClient();
       
       // Parse and execute safe queries based on table name
       // This is a simplified approach - in production, use parameterized queries

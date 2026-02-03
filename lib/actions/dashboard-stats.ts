@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 
 export async function getDashboardStats() {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const currentMonthStart = new Date();
   currentMonthStart.setDate(1);
@@ -62,7 +62,7 @@ export async function getDashboardStats() {
 }
 
 export async function getInventoryStats() {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const { data, error } = await supabase
     .from('vehicles')
@@ -91,7 +91,7 @@ export async function getInventoryStats() {
 }
 
 export async function getRevenueData() {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   // Fetch sales deals for revenue trend
   const { data, error } = await supabase
@@ -131,7 +131,7 @@ export async function getRevenueData() {
 }
 
 export async function getRecentLeads(limit: number = 5) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const { data, error } = await supabase
     .from('leads')

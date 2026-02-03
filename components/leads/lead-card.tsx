@@ -64,7 +64,7 @@ export function LeadCard({
               {phone}
             </a>
           </div>
-          <Badge variant="blue" radius="pill">
+          <Badge variant="secondary">
             {sourceLabel}
           </Badge>
         </div>

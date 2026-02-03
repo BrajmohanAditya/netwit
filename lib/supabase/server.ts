@@ -52,6 +52,6 @@ const mockClient = {
   },
 } as any;
 
-export async function createClient() {
+export function createClient() {
   return mockClient;
 }

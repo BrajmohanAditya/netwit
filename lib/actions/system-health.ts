@@ -19,7 +19,7 @@ export interface SystemHealthStatus {
 
 export async function checkDatabaseIntegrity(): Promise<SystemHealthStatus> {
   const startTime = Date.now();
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const status: SystemHealthStatus = {
     inventory: 'OK',
@@ -124,7 +124,7 @@ export async function checkDatabaseIntegrity(): Promise<SystemHealthStatus> {
 }
 
 export async function getTableCounts() {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const tables = ['vehicles', 'leads', 'invoices', 'users', 'test_drives', 'sales_deals'];
   const counts: Record<string, number> = {};
