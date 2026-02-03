@@ -89,15 +89,15 @@ const campaigns: Campaign[] = [
 const getCampaignStatusVariant = (status: CampaignStatus) => {
   switch (status) {
     case "Active":
-      return "green";
+      return "default";
     case "Scheduled":
-      return "blue";
+      return "secondary";
     case "Completed":
-      return "gray";
+      return "outline";
     case "Draft":
-      return "gray";
+      return "outline";
     default:
-      return "gray";
+      return "secondary";
   }
 };
 
@@ -218,7 +218,7 @@ export default function CampaignsPage() {
                     <Badge variant={getCampaignStatusVariant(campaign.status)}>
                       {campaign.status}
                     </Badge>
-                    <Badge variant="gray">{campaign.type}</Badge>
+                    <Badge variant="secondary">{campaign.type}</Badge>
                   </div>
 
                   <div className="space-y-2 text-sm">
