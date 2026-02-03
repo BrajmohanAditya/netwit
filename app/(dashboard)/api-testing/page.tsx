@@ -106,7 +106,7 @@ export default function ApiTestingPage() {
           >
             <Globe className="h-4 w-4" />
             <span className="hidden sm:inline">All Endpoints</span>
-            <Badge variant="blue" className="ml-1">
+            <Badge variant="secondary" className="ml-1">
               {API_ENDPOINTS.length}
             </Badge>
           </TabsTrigger>
@@ -116,7 +116,7 @@ export default function ApiTestingPage() {
           >
             <Zap className="h-4 w-4" />
             <span className="hidden sm:inline">Server Actions</span>
-            <Badge variant="blue" className="ml-1">
+            <Badge variant="secondary" className="ml-1">
               {serverActions.length}
             </Badge>
           </TabsTrigger>
@@ -126,7 +126,7 @@ export default function ApiTestingPage() {
           >
             <Globe className="h-4 w-4" />
             <span className="hidden sm:inline">API Routes</span>
-            <Badge variant="blue" className="ml-1">
+            <Badge variant="secondary" className="ml-1">
               {apiRoutes.length}
             </Badge>
           </TabsTrigger>
