@@ -225,7 +225,7 @@ export function useVehicleWizard() {
         setIsLoading(false);
       }
     },
-    [formData, supabase],
+    [createVehicle, formData, supabase],
   );
 
   const resetForm = useCallback(() => {

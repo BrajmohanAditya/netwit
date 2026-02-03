@@ -52,6 +52,8 @@ interface FollowUpItem {
   notes: string;
 }
 
+type NewFollowUpState = Omit<FollowUpItem, "id">;
+
 const initials = (name: string) =>
   name
     .split(" ")
@@ -75,14 +77,14 @@ export default function FollowUpsPage() {
   const [isNewFollowUpOpen, setIsNewFollowUpOpen] = useState(false);
   const [selectedFollowUp, setSelectedFollowUp] =
     useState<Doc<"followUps"> | null>(null);
-  const [newFollowUp, setNewFollowUp] = useState({
+  const [newFollowUp, setNewFollowUp] = useState<NewFollowUpState>({
     customer: "",
     lead: "",
     dueDate: "",
     time: "",
     channel: "Call" as FollowUpChannel,
     assignedTo: "Jamie Lee",
-    priority: "Medium" as const,
+    priority: "Medium",
     notes: "",
     status: "Scheduled" as FollowUpStatus,
   });
