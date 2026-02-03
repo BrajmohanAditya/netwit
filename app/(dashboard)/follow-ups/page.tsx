@@ -562,7 +562,7 @@ export default function FollowUpsPage() {
                     <Badge
                       className={cn(
                         "border border-transparent",
-                        followUpStatuses[followUp.status],
+                        followUpStatuses[followUp.status as FollowUpStatus],
                       )}
                     >
                       {followUp.status}
