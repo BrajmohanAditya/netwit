@@ -67,7 +67,7 @@ export default function DealsPage() {
   const wizardRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
   const createdStatus = searchParams.get("status") === "created";
-  const deals = useQuery(api.deals.get) || [];
+  const deals = useQuery(api.deals.get, {}) || [];
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {
