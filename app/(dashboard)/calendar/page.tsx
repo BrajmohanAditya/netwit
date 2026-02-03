@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Calendar, type CalendarEvent } from "@/components/ui/calendar";
@@ -16,8 +16,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 export default function CalendarPage() {
+  const convexEvents = useQuery(api.calendar.get) || [];
+  const createEvent = useMutation(api.calendar.create);
+  const deleteEvent = useMutation(api.calendar.deleteEvent);
+
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date(),
   );
@@ -39,44 +45,55 @@ export default function CalendarPage() {
     remindEmail: true,
     remindSms: true,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [events, setEvents] = useState<CalendarEvent[]>([
-    {
-      id: "evt-jan-15-1",
-      title: "Test",
-      time: "10am",
-      type: "test-drive",
-      date: new Date(2026, 0, 15),
-    },
-    {
-      id: "evt-jan-15-2",
-      title: "Appt",
-      time: "2pm",
-      type: "appointment",
-      date: new Date(2026, 0, 15),
-    },
-    {
-      id: "evt-jan-15-3",
-      title: "Call",
-      time: "4pm",
-      type: "call",
-      date: new Date(2026, 0, 15),
-    },
-    {
-      id: "evt-jan-15-4",
-      title: "Follow-up",
-      time: "5pm",
-      type: "follow-up",
-      date: new Date(2026, 0, 15),
-    },
-    {
-      id: "evt-jan-15-5",
-      title: "Invoice",
-      time: "6pm",
-      type: "invoice",
-      date: new Date(2026, 0, 15),
-    },
-  ]);
+  // Map Convex events to CalendarEvent type
+  const events: CalendarEvent[] = convexEvents.map((evt: any) => ({
+    id: evt._id,
+    title: evt.title,
+    time: evt.startTime ? evt.startTime.toLowerCase() : "all day", // simple mapping
+    type: evt.type as any,
+    date: new Date(evt.date),
+    // Pass strictly strictly what's needed for UI, or expand CalendarEvent type if needed
+  }));
+
+  const handleCreateEvent = async () => {
+    setIsSubmitting(true);
+    try {
+      await createEvent({
+        title:
+          createForm.title || `${createForm.type} with ${createForm.customer}`,
+        type: createForm.type,
+        customer: createForm.customer,
+        vehicle: createForm.vehicle,
+        date: createForm.date,
+        startTime: createForm.startTime,
+        endTime: createForm.endTime,
+        location: createForm.location,
+        assignedTo: createForm.assignedTo,
+        description: createForm.description,
+        remindEmail: createForm.remindEmail,
+        remindSms: createForm.remindSms,
+      });
+      setIsCreateOpen(false);
+    } catch (err) {
+      console.error("Failed to create event", err);
+      alert("Failed to create event");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    if (confirm("Are you sure you want to delete this event?")) {
+      try {
+        await deleteEvent({ id: id as any });
+        setIsEventOpen(false);
+      } catch (err) {
+        console.error("Failed to delete", err);
+      }
+    }
+  };
 
   const openCreateModal = () => {
     const date = selectedDate || new Date();
@@ -166,14 +183,6 @@ export default function CalendarPage() {
     }
   };
 
-  const currentLabel = (selectedDate || new Date()).toLocaleDateString(
-    "en-US",
-    {
-      month: "long",
-      year: "numeric",
-    },
-  );
-
   return (
     <div className="flex-1 space-y-6 animate-in fade-in duration-500">
       <PageHeader
@@ -207,7 +216,10 @@ export default function CalendarPage() {
             <div className="text-sm text-muted-foreground w-full sm:w-auto text-right sm:text-left">
               Current:{" "}
               <span className="font-semibold text-foreground">
-                {currentLabel}
+                {(selectedDate || new Date()).toLocaleDateString("en-US", {
+                  month: "long",
+                  year: "numeric",
+                })}
               </span>
             </div>
           </div>
@@ -380,8 +392,23 @@ export default function CalendarPage() {
             </DialogDescription>
           </DialogHeader>
           {activeEvent && (
-            <div className="text-sm text-muted-foreground">
-              Type: {activeEvent.type.replace("-", " ")}
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm text-muted-foreground">
+                  Type: {activeEvent.type.replace("-", " ")}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsEventOpen(false)}>
+                  Close
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDeleteEvent(activeEvent.id)}
+                >
+                  Delete
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
@@ -591,35 +618,15 @@ export default function CalendarPage() {
               <Button variant="ghost" onClick={() => setIsCreateOpen(false)}>
                 Cancel
               </Button>
-              <Button
-                onClick={() => {
-                  if (!createForm.date || !createForm.title) {
-                    setIsCreateOpen(false);
-                    return;
-                  }
-                  const newEventDate = new Date(`${createForm.date}T00:00:00`);
-                  const displayTime = createForm.startTime
-                    ? new Date(
-                        `1970-01-01T${createForm.startTime}:00`,
-                      ).toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })
-                    : "";
-                  setEvents((prev) => [
-                    ...prev,
-                    {
-                      id: `evt-${Date.now()}`,
-                      title: createForm.title,
-                      time: displayTime || "",
-                      type: createForm.type as CalendarEvent["type"],
-                      date: newEventDate,
-                    },
-                  ]);
-                  setIsCreateOpen(false);
-                }}
-              >
-                Create
+              <Button onClick={handleCreateEvent} disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Create Event"
+                )}
               </Button>
             </div>
           </div>

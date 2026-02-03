@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, CheckCircle2, Plus, Star } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Plus, Star, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 type TestDriveStatus =
   | "Requested"
@@ -37,15 +40,15 @@ type TestDriveStatus =
   | "No-Show";
 
 interface TestDriveItem {
-  id: string;
+  _id: Id<"testDrives">;
   date: string;
   time: string;
-  customer: string;
-  vehicle: string;
-  staff: string;
-  status: TestDriveStatus;
+  customerName: string;
+  vehicleName: string;
+  staffName: string;
+  status: string;
   interest: number;
-  nextSteps: string;
+  nextSteps?: string;
 }
 
 interface TestDriveCalendarEvent {
@@ -58,74 +61,7 @@ interface TestDriveCalendarEvent {
   staff: string;
 }
 
-const testDrives: TestDriveItem[] = [
-  {
-    id: "td-1",
-    date: "Jan 25, 2026",
-    time: "9:30 AM",
-    customer: "Amelia Brooks",
-    vehicle: "2025 Audi Q5",
-    staff: "Jamie Lee",
-    status: "Scheduled",
-    interest: 4,
-    nextSteps: "Confirm license",
-  },
-  {
-    id: "td-2",
-    date: "Jan 25, 2026",
-    time: "10:00 AM",
-    customer: "Caleb Owens",
-    vehicle: "2026 BMW X3",
-    staff: "Alex Martinez",
-    status: "Requested",
-    interest: 3,
-    nextSteps: "Send confirmation",
-  },
-  {
-    id: "td-3",
-    date: "Jan 25, 2026",
-    time: "10:30 AM",
-    customer: "Harper Sloan",
-    vehicle: "2025 Lexus RX",
-    staff: "Sam Patel",
-    status: "In Progress",
-    interest: 5,
-    nextSteps: "Review trade-in",
-  },
-  {
-    id: "td-4",
-    date: "Jan 24, 2026",
-    time: "2:00 PM",
-    customer: "Noah Chen",
-    vehicle: "2025 Tesla Model Y",
-    staff: "Jamie Lee",
-    status: "Completed",
-    interest: 5,
-    nextSteps: "Follow up offer",
-  },
-  {
-    id: "td-5",
-    date: "Jan 23, 2026",
-    time: "11:00 AM",
-    customer: "Sofia Patel",
-    vehicle: "2025 Ford Explorer",
-    staff: "Alex Martinez",
-    status: "No-Show",
-    interest: 1,
-    nextSteps: "Reschedule",
-  },
-  {
-    id: "td-6",
-    date: "Jan 22, 2026",
-    time: "4:30 PM",
-    customer: "Mason Reed",
-    vehicle: "2026 Honda CR-V",
-    staff: "Sam Patel",
-    status: "Cancelled",
-    interest: 2,
-    nextSteps: "Close record",
-  },
-];
+// const testDrives removed - fetching from Convex
 
 const calendarEvents: TestDriveCalendarEvent[] = [
   {
@@ -196,6 +132,11 @@ const initials = (name: string) =>
     .toUpperCase();
 
 export default function TestDrivesPage() {
+  const testDrives = useQuery(api.testDrives.get);
+  const createTestDrive = useMutation(api.testDrives.create);
+  const updateTestDrive = useMutation(api.testDrives.update);
+  const deleteTestDrive = useMutation(api.testDrives.deleteDrive);
+
   const [filters, setFilters] = useState({
     dateRange: "",
     status: "",
@@ -204,6 +145,10 @@ export default function TestDrivesPage() {
     staff: "",
   });
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [selectedDrive, setSelectedDrive] = useState<any>(null); // Use existing type or any for now
+  const [editingId, setEditingId] = useState<Id<"testDrives"> | null>(null);
+
   const [currentStep, setCurrentStep] = useState(1);
   const [scheduleForm, setScheduleForm] = useState({
     customer: "",
@@ -232,6 +177,146 @@ export default function TestDrivesPage() {
     remindStaff: true,
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleCreateTestDrive = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const date = scheduleForm.scheduledDate || scheduleForm.requestedDate;
+      const time = scheduleForm.scheduledTime || scheduleForm.requestedTime;
+
+      if (
+        !scheduleForm.customer ||
+        !scheduleForm.vehicle ||
+        !scheduleForm.assignedStaff ||
+        !date ||
+        !time
+      ) {
+        alert(
+          "Please fill in all required fields: Customer, Vehicle, Staff, Date, and Time.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (editingId) {
+        await updateTestDrive({
+          id: editingId,
+          customerName: scheduleForm.customer,
+          vehicleName: scheduleForm.vehicle,
+          date: date,
+          time: time,
+          staffName: scheduleForm.assignedStaff,
+          // status: "Scheduled", // Don't reset status on edit
+          interest: 0,
+          // nextSteps: "Upcoming",
+          leadId: scheduleForm.lead,
+          duration: scheduleForm.duration,
+          route: scheduleForm.route,
+          licenseNumber: scheduleForm.licenseNumber,
+          licenseIssued: scheduleForm.licenseIssued,
+          licenseExpires: scheduleForm.licenseExpires,
+          insuranceVerified: scheduleForm.insuranceVerified,
+          comments: scheduleForm.internalNotes,
+          staffNotes: scheduleForm.internalNotes,
+        });
+      } else {
+        await createTestDrive({
+          customerName: scheduleForm.customer,
+          vehicleName: scheduleForm.vehicle,
+          date: date,
+          time: time,
+          staffName: scheduleForm.assignedStaff,
+          status: "Scheduled",
+          interest: 0,
+          nextSteps: "Upcoming",
+          leadId: scheduleForm.lead,
+          duration: scheduleForm.duration,
+          route: scheduleForm.route,
+          licenseNumber: scheduleForm.licenseNumber,
+          licenseIssued: scheduleForm.licenseIssued,
+          licenseExpires: scheduleForm.licenseExpires,
+          insuranceVerified: scheduleForm.insuranceVerified,
+          comments: scheduleForm.internalNotes,
+          staffNotes: scheduleForm.internalNotes,
+        });
+      }
+      setIsScheduleOpen(false);
+      setEditingId(null);
+      // Reset form or show success toast
+    } catch (error) {
+      console.error("Failed to save test drive", error);
+      alert("Failed to save test drive. Please check the console for details.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openScheduleModal = () => {
+    setEditingId(null);
+    setScheduleForm({
+      customer: "",
+      vehicle: "",
+      lead: "",
+      requestedDate: "",
+      requestedTime: "",
+      scheduledDate: "",
+      scheduledTime: "",
+      duration: "1 hour",
+      route: "Highway Test",
+      assignedStaff: "",
+      licenseNumber: "",
+      licenseIssued: "",
+      licenseExpires: "",
+      licenseFront: "",
+      licenseBack: "",
+      insuranceVerified: false,
+      insuranceProof: "",
+      signature: "",
+      contactMethod: "phone",
+      specialRequirements: "",
+      internalNotes: "",
+      remindEmail: true,
+      remindSms: true,
+      remindStaff: true,
+    });
+    setCurrentStep(1);
+    setIsScheduleOpen(true);
+  };
+
+  const handleEdit = (drive: any) => {
+    setEditingId(drive._id);
+    setScheduleForm({
+      ...scheduleForm, // keeping defaults for missing fields
+      customer: drive.customerName || "",
+      vehicle: drive.vehicleName || "",
+      assignedStaff: drive.staffName || "",
+      scheduledDate: drive.date || "",
+      scheduledTime: drive.time || "",
+      lead: drive.leadId || "",
+      duration: drive.duration || "1 hour",
+      route: drive.route || "Highway Test",
+      licenseNumber: drive.licenseNumber || "",
+      licenseIssued: drive.licenseIssued || "",
+      licenseExpires: drive.licenseExpires || "",
+      insuranceVerified: drive.insuranceVerified || false,
+      internalNotes: drive.comments || "",
+    });
+    setIsScheduleOpen(true);
+  };
+
+  const handleView = (drive: any) => {
+    setSelectedDrive(drive);
+    setIsViewOpen(true);
+  };
+
+  const handleDelete = async (id: Id<"testDrives">) => {
+    if (confirm("Are you sure you want to delete this test drive schedule?")) {
+      await deleteTestDrive({ id });
+    }
+  };
+
   const calendarSlots = ["9:00", "9:30", "10:00", "10:30"];
   const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -242,14 +327,10 @@ export default function TestDrivesPage() {
     { number: 4, label: "Details" },
   ];
 
-  const openScheduleModal = () => {
-    setCurrentStep(1);
-    setIsScheduleOpen(true);
-  };
-
   const closeScheduleModal = () => {
     setIsScheduleOpen(false);
     setCurrentStep(1);
+    setEditingId(null);
   };
 
   return (
@@ -447,75 +528,107 @@ export default function TestDrivesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {testDrives.map((drive) => (
-                <TableRow key={drive.id}>
-                  <TableCell>
-                    <div className="font-medium text-sm">{drive.date}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {drive.time}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {drive.customer}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-16 rounded-md bg-slate-100 text-xs text-slate-500 flex items-center justify-center">
-                        thumb
-                      </div>
-                      <div className="text-sm">{drive.vehicle}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">
-                          {initials(drive.staff)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm">{drive.staff}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      className={cn(
-                        "border border-transparent",
-                        statusStyles[drive.status].className,
-                      )}
-                    >
-                      {statusStyles[drive.status].label}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <Star
-                          key={`${drive.id}-star-${index}`}
-                          className={cn(
-                            "h-4 w-4",
-                            index < drive.interest
-                              ? "text-yellow-400 fill-current"
-                              : "text-slate-300",
-                          )}
-                        />
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {drive.nextSteps}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
-                        View
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        Edit
-                      </Button>
-                    </div>
+              {testDrives === undefined ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : testDrives.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-4">
+                    No test drives found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                testDrives.map((drive) => (
+                  <TableRow key={drive._id}>
+                    <TableCell>
+                      <div className="font-medium text-sm">{drive.date}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {drive.time}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {drive.customerName}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-16 rounded-md bg-slate-100 text-xs text-slate-500 flex items-center justify-center">
+                          thumb
+                        </div>
+                        <div className="text-sm">{drive.vehicleName}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs">
+                            {initials(drive.staffName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">{drive.staffName}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={cn(
+                          "border border-transparent",
+                          statusStyles[drive.status as TestDriveStatus]
+                            ?.className || "bg-gray-100 text-gray-900",
+                        )}
+                      >
+                        {statusStyles[drive.status as TestDriveStatus]?.label ||
+                          drive.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <Star
+                            key={`${drive._id}-star-${index}`}
+                            className={cn(
+                              "h-4 w-4",
+                              index < (drive.interest || 0)
+                                ? "text-yellow-400 fill-current"
+                                : "text-slate-300",
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {drive.nextSteps}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleView(drive)}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(drive)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDelete(drive._id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -1184,13 +1297,85 @@ export default function TestDrivesPage() {
                 </Button>
                 <div className="flex gap-2">
                   <Button variant="ghost" onClick={closeScheduleModal}>
-                    Save
+                    Save (Draft)
                   </Button>
-                  <Button onClick={closeScheduleModal}>Confirm</Button>
+                  <Button
+                    onClick={handleCreateTestDrive}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Confirm"
+                    )}
+                  </Button>
                 </div>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Test Drive Details</DialogTitle>
+            <DialogDescription>
+              {selectedDrive?.date} at {selectedDrive?.time}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Customer</Label>
+                <div className="text-sm font-medium">
+                  {selectedDrive?.customerName}
+                </div>
+              </div>
+              <div>
+                <Label>Vehicle</Label>
+                <div className="text-sm font-medium">
+                  {selectedDrive?.vehicleName}
+                </div>
+              </div>
+              <div>
+                <Label>Staff</Label>
+                <div className="text-sm font-medium">
+                  {selectedDrive?.staffName}
+                </div>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Badge variant="outline">{selectedDrive?.status}</Badge>
+              </div>
+              <div>
+                <Label>Duration</Label>
+                <div className="text-sm font-medium">
+                  {selectedDrive?.duration || "N/A"}
+                </div>
+              </div>
+              <div>
+                <Label>Route</Label>
+                <div className="text-sm font-medium">
+                  {selectedDrive?.route || "N/A"}
+                </div>
+              </div>
+            </div>
+            {selectedDrive?.comments && (
+              <div>
+                <Label>Internal Notes</Label>
+                <div className="text-sm text-muted-foreground p-2 bg-slate-50 rounded-md">
+                  {selectedDrive.comments}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => setIsViewOpen(false)}>Close</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

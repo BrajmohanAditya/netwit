@@ -8,7 +8,9 @@
  * @module
  */
 
+import type * as calendar from "../calendar.js";
 import type * as leads from "../leads.js";
+import type * as testDrives from "../testDrives.js";
 import type * as vehicles from "../vehicles.js";
 
 import type {
@@ -18,7 +20,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  calendar: typeof calendar;
   leads: typeof leads;
+  testDrives: typeof testDrives;
   vehicles: typeof vehicles;
 }>;
 

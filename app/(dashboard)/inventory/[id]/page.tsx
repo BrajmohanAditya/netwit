@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Vehicle } from "@/types/vehicle";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 
 interface InventoryVehicleViewPageProps {
   params: { id: string };
@@ -158,19 +158,19 @@ export default function InventoryVehicleViewPage({
               <span className="text-muted-foreground">VIN</span>
               <span className="font-medium">{vehicle.vin}</span>
             </div>
-            <Separator />
+            <div className="h-[1px] w-full bg-slate-200 my-2" />
             <div className="flex justify-between">
               <span className="text-muted-foreground">Stock #</span>
               <span className="font-medium">{vehicle.stockNumber}</span>
             </div>
-            <Separator />
+            <div className="h-[1px] w-full bg-slate-200 my-2" />
             <div className="flex justify-between">
               <span className="text-muted-foreground">Mileage</span>
               <span className="font-medium">
                 {vehicle.odometer.toLocaleString()} mi
               </span>
             </div>
-            <Separator />
+            <div className="h-[1px] w-full bg-slate-200 my-2" />
             <div className="flex justify-between">
               <span className="text-muted-foreground">Days in Stock</span>
               <span className="font-medium">{vehicle.daysInStock}</span>

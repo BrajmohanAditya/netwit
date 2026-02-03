@@ -187,11 +187,20 @@ export function Calendar({
               <div className="text-xs font-semibold text-slate-700">{day}</div>
               <div className="mt-1 space-y-1">
                 {visibleEvents.map((event) => (
-                  <button
+                  <div
                     key={event.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={(eventClick) => {
                       eventClick.stopPropagation();
                       onEventClick?.(event);
+                    }}
+                    onKeyDown={(eventKey) => {
+                      if (eventKey.key === "Enter" || eventKey.key === " ") {
+                        eventKey.preventDefault();
+                        eventKey.stopPropagation();
+                        onEventClick?.(event);
+                      }
                     }}
                     className="flex w-full items-center gap-2 text-[11px] text-slate-600 hover:text-slate-900"
                   >
@@ -204,7 +213,7 @@ export function Calendar({
                     <span className="truncate">
                       {event.title}: {event.time}
                     </span>
-                  </button>
+                  </div>
                 ))}
                 {hiddenCount > 0 && (
                   <div className="text-[11px] text-slate-400">
