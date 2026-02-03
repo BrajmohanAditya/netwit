@@ -58,15 +58,7 @@ export function ApiTester({ endpoint }: ApiTesterProps) {
             <div className="flex items-center gap-2">
               <CardTitle className="text-lg">{endpoint.name}</CardTitle>
               <Badge
-                variant={
-                  endpoint.method === "GET"
-                    ? "green"
-                    : endpoint.method === "POST"
-                      ? "blue"
-                      : endpoint.method === "PUT"
-                        ? "yellow"
-                        : "red"
-                }
+                variant="secondary"
                 className={cn(
                   "text-xs",
                   endpoint.method === "GET" &&

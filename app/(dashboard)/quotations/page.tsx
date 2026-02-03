@@ -44,17 +44,17 @@ interface QuoteRow {
 const getBadgeVariant = (status: QuoteStatus) => {
   switch (status) {
     case "Draft":
-      return "gray";
+      return "outline";
     case "Sent":
-      return "blue";
+      return "secondary";
     case "Accepted":
-      return "green";
+      return "default";
     case "Declined":
-      return "red";
+      return "destructive";
     case "Expired":
-      return "yellow";
+      return "secondary";
     default:
-      return "gray";
+      return "secondary";
   }
 };
 

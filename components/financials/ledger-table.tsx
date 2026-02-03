@@ -65,7 +65,9 @@ export function LedgerTable({ transactions }: { transactions: Transaction[] }) {
               </TableCell>
               <TableCell>
                 <Badge
-                  variant={transaction.type === "sale" ? "green" : "red"}
+                  variant={
+                    transaction.type === "sale" ? "default" : "destructive"
+                  }
                   className="capitalize"
                 >
                   {transaction.type}
