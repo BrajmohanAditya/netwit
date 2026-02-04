@@ -68,7 +68,7 @@ export default function ExpensesPage() {
   const [isRecordOpen, setIsRecordOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<Record<string, unknown> | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<unknown>(null);
   const [editForm, setEditForm] = useState<ExpenseFormData>({
     title: "",
     category: "",
@@ -96,13 +96,13 @@ export default function ExpensesPage() {
   };
 
   const handleView = (expense: unknown) => {
-    setSelectedExpense(expense);
+    setSelectedExpense(expense as Record<string, unknown>);
     setIsViewOpen(true);
   };
 
   const handleEdit = (expense: unknown) => {
-    setSelectedExpense(expense);
-    const exp = expense as { title?: string; category?: string; amount?: number; date?: string; vendor?: string; vehicle?: string; receipt?: string };
+    setSelectedExpense(expense as Record<string, unknown>);
+    const exp = expense as Record<string, unknown>;
     setEditForm({
       title: String(exp.title || ""),
       category: String(exp.category || ""),
@@ -117,10 +117,10 @@ export default function ExpensesPage() {
 
   const handleSaveEdit = () => {
     if (!selectedExpense) return;
-    const exp = selectedExpense as { _id: { toString(): string }; date?: string };
+    const exp = selectedExpense as Record<string, unknown>;
     const parsedAmount = Number(editForm.amount || 0);
     updateExpense.mutate({
-      id: exp._id.toString(),
+      id: String(exp._id),
       title: editForm.title,
       category: editForm.category,
       amount: Number.isNaN(parsedAmount) ? 0 : parsedAmount,
@@ -346,27 +346,34 @@ export default function ExpensesPage() {
           </DialogHeader>
           {selectedExpense && (
             <div className="grid gap-3 text-sm">
-              <div>
-                <span className="font-semibold">Title:</span> {String(selectedExpense.title || "")}
-              </div>
-              <div>
-                <span className="font-semibold">Date:</span> {formatDate(String(selectedExpense.date || ""))}
-              </div>
-              <div>
-                <span className="font-semibold">Category:</span> {String(selectedExpense.category || "")}
-              </div>
-              <div>
-                <span className="font-semibold">Amount:</span> ${Number(selectedExpense.amount || 0).toFixed(2)}
-              </div>
-              <div>
-                <span className="font-semibold">Vendor:</span> {String(selectedExpense.vendor || "-")}
-              </div>
-              <div>
-                <span className="font-semibold">Vehicle:</span> {String(selectedExpense.vehicle || "-")}
-              </div>
-              <div>
-                <span className="font-semibold">Receipt:</span> {String(selectedExpense.receipt || "-")}
-              </div>
+              {(() => {
+                const exp = selectedExpense as Record<string, unknown>;
+                return (
+                  <>
+                    <div>
+                      <span className="font-semibold">Title:</span> {String(exp.title || "")}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Date:</span> {formatDate(String(exp.date || ""))}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Category:</span> {String(exp.category || "")}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Amount:</span> ${Number(exp.amount || 0).toFixed(2)}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Vendor:</span> {String(exp.vendor || "-")}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Vehicle:</span> {String(exp.vehicle || "-")}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Receipt:</span> {String(exp.receipt || "-")}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           )}
         </DialogContent>
