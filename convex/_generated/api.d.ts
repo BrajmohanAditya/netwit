@@ -11,6 +11,7 @@
 import type * as calendar from "../calendar.js";
 import type * as customers from "../customers.js";
 import type * as deals from "../deals.js";
+import type * as expenses from "../expenses.js";
 import type * as followUps from "../followUps.js";
 import type * as invoices from "../invoices.js";
 import type * as leads from "../leads.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   calendar: typeof calendar;
   customers: typeof customers;
   deals: typeof deals;
+  expenses: typeof expenses;
   followUps: typeof followUps;
   invoices: typeof invoices;
   leads: typeof leads;

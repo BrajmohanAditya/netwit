@@ -24,50 +24,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-interface ExpenseRow {
-  id: string;
-  date: string;
-  title: string;
-  category: string;
-  amount: number;
-  vendor: string;
-  vehicle: string;
-  receipt: string;
-}
-
-const expenses: ExpenseRow[] = [
-  {
-    id: "exp-1",
-    date: "Jan 20, 2026",
-    title: "Detailing",
-    category: "Detailing",
-    amount: 450,
-    vendor: "Sparkle Auto",
-    vehicle: "2025 Audi Q5",
-    receipt: "REC-1001",
-  },
-  {
-    id: "exp-2",
-    date: "Jan 18, 2026",
-    title: "Oil Change",
-    category: "Repairs",
-    amount: 120,
-    vendor: "Quick Lube",
-    vehicle: "2026 BMW X3",
-    receipt: "REC-1002",
-  },
-  {
-    id: "exp-3",
-    date: "Jan 12, 2026",
-    title: "Ad Spend",
-    category: "Marketing",
-    amount: 980,
-    vendor: "Meta Ads",
-    vehicle: "-",
-    receipt: "REC-1003",
-  },
-];
+import { useExpenses, useExpenseStats, useCreateExpense, useUpdateExpense, useDeleteExpense } from "@/hooks/use-expenses";
+import { toast } from "react-hot-toast";
 
 const expenseCategories = [
   "Vehicle Purchase",
@@ -86,7 +44,12 @@ const expenseCategories = [
 ];
 
 export default function ExpensesPage() {
-  const [expensesData, setExpensesData] = useState<ExpenseRow[]>(expenses);
+  const { data: expenses, isLoading } = useExpenses();
+  const { data: stats } = useExpenseStats();
+  const createExpense = useCreateExpense();
+  const updateExpense = useUpdateExpense();
+  const deleteExpense = useDeleteExpense();
+
   const [filters, setFilters] = useState({
     dateRange: "",
     category: "",
@@ -95,7 +58,7 @@ export default function ExpensesPage() {
   const [isRecordOpen, setIsRecordOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<ExpenseRow | null>(
+  const [selectedExpense, setSelectedExpense] = useState<typeof expenses extends Array<infer T> ? T : never | null>(
     null,
   );
   const [editForm, setEditForm] = useState({
@@ -119,28 +82,26 @@ export default function ExpensesPage() {
     taxDeductible: false,
   });
 
-  const formatDateForInput = (value: string) => {
-    if (!value) return "";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-    return date.toISOString().split("T")[0];
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
-  const handleView = (expense: ExpenseRow) => {
+  const handleView = (expense: typeof expenses extends Array<infer T> ? T : never) => {
     setSelectedExpense(expense);
     setIsViewOpen(true);
   };
 
-  const handleEdit = (expense: ExpenseRow) => {
+  const handleEdit = (expense: typeof expenses extends Array<infer T> ? T : never) => {
     setSelectedExpense(expense);
     setEditForm({
       title: expense.title,
       category: expense.category,
       amount: expense.amount.toString(),
-      date: formatDateForInput(expense.date),
-      vendor: expense.vendor,
-      vehicle: expense.vehicle,
-      receipt: expense.receipt,
+      date: expense.date,
+      vendor: expense.vendor || "",
+      vehicle: expense.vehicle || "",
+      receipt: expense.receipt || "",
     });
     setIsEditOpen(true);
   };
@@ -148,24 +109,64 @@ export default function ExpensesPage() {
   const handleSaveEdit = () => {
     if (!selectedExpense) return;
     const parsedAmount = Number(editForm.amount || 0);
-    setExpensesData((prev) =>
-      prev.map((expense) =>
-        expense.id === selectedExpense.id
-          ? {
-            ...expense,
-            title: editForm.title,
-            category: editForm.category,
-            amount: Number.isNaN(parsedAmount) ? 0 : parsedAmount,
-            date: editForm.date || expense.date,
-            vendor: editForm.vendor,
-            vehicle: editForm.vehicle,
-            receipt: editForm.receipt,
-          }
-          : expense,
-      ),
-    );
+    updateExpense.mutate({
+      id: selectedExpense._id,
+      title: editForm.title,
+      category: editForm.category,
+      amount: Number.isNaN(parsedAmount) ? 0 : parsedAmount,
+      date: editForm.date || selectedExpense.date,
+      vendor: editForm.vendor,
+      vehicle: editForm.vehicle,
+      receipt: editForm.receipt,
+    });
     setIsEditOpen(false);
+    toast.success("Expense updated");
   };
+
+  const handleDelete = (expense: typeof expenses extends Array<infer T> ? T : never) => {
+    if (confirm("Are you sure you want to delete this expense?")) {
+      deleteExpense.mutate(expense._id);
+      toast.success("Expense deleted");
+    }
+  };
+
+  const handleRecordExpense = () => {
+    const amount = Number(recordForm.amount || 0);
+    if (!recordForm.title || !recordForm.category || !amount) {
+      toast.error("Please fill in required fields");
+      return;
+    }
+    createExpense.mutate({
+      title: recordForm.title,
+      category: recordForm.category,
+      amount,
+      date: recordForm.date || new Date().toISOString().split("T")[0],
+      vendor: recordForm.vendor,
+      vehicle: recordForm.vehicle,
+      receipt: recordForm.receipt,
+      description: recordForm.description,
+      taxDeductible: recordForm.taxDeductible,
+    });
+    setIsRecordOpen(false);
+    setRecordForm({
+      title: "",
+      category: "",
+      amount: "",
+      date: "",
+      vendor: "",
+      description: "",
+      vehicle: "",
+      receipt: "",
+      taxDeductible: false,
+    });
+    toast.success("Expense recorded");
+  };
+
+  const filteredExpenses = (expenses || []).filter((expense) => {
+    if (filters.category && expense.category !== filters.category) return false;
+    if (filters.vehicle && !expense.vehicle?.toLowerCase().includes(filters.vehicle.toLowerCase())) return false;
+    return true;
+  });
 
   return (
     <div className="flex-1 space-y-6 px-6 py-6">
@@ -175,7 +176,7 @@ export default function ExpensesPage() {
             <div className="space-y-1">
               <h1 className="text-2xl font-semibold">Expenses</h1>
               <div className="text-sm text-muted-foreground">
-                Stats: [This Month: $45K] [This Year: $520K] [Avg: $43K/mo]
+                Stats: [This Month: ${stats?.thisMonth?.toLocaleString() || "0"}] [This Year: ${stats?.thisYear?.toLocaleString() || "0"}] [Avg: ${stats?.averageMonthly?.toLocaleString() || "0"}/mo]
               </div>
             </div>
             <Button
@@ -251,61 +252,79 @@ export default function ExpensesPage() {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Vendor</TableHead>
-                <TableHead>Vehicle</TableHead>
-                <TableHead>Receipt</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {expensesData.map((expense) => (
-                <TableRow key={expense.id}>
-                  <TableCell>{expense.date}</TableCell>
-                  <TableCell className="font-medium">{expense.title}</TableCell>
-                  <TableCell>
-                    <Badge className="bg-slate-100 text-slate-900">
-                      {expense.category}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-semibold text-green-600">
-                    ${expense.amount.toFixed(2)}
-                  </TableCell>
-                  <TableCell>{expense.vendor}</TableCell>
-                  <TableCell>{expense.vehicle}</TableCell>
-                  <TableCell>
-                    <Badge className="bg-blue-50 text-blue-700">
-                      {expense.receipt}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleView(expense)}
-                      >
-                        View
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(expense)}
-                      >
-                        Edit
-                      </Button>
-                    </div>
-                  </TableCell>
+          {isLoading ? (
+            <div className="p-8 text-center text-muted-foreground">Loading expenses...</div>
+          ) : filteredExpenses.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">No expenses found</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead>Vehicle</TableHead>
+                  <TableHead>Receipt</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredExpenses.map((expense) => (
+                  <TableRow key={expense._id}>
+                    <TableCell>{formatDate(expense.date)}</TableCell>
+                    <TableCell className="font-medium">{expense.title}</TableCell>
+                    <TableCell>
+                      <Badge className="bg-slate-100 text-slate-900">
+                        {expense.category}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-semibold text-green-600">
+                      ${expense.amount.toFixed(2)}
+                    </TableCell>
+                    <TableCell>{expense.vendor || "-"}</TableCell>
+                    <TableCell>{expense.vehicle || "-"}</TableCell>
+                    <TableCell>
+                      {expense.receipt ? (
+                        <Badge className="bg-blue-50 text-blue-700">
+                          {expense.receipt}
+                        </Badge>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleView(expense)}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(expense)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700"
+                          onClick={() => handleDelete(expense)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -317,32 +336,33 @@ export default function ExpensesPage() {
           {selectedExpense && (
             <div className="grid gap-3 text-sm">
               <div>
-                <span className="font-semibold">Title:</span>{" "}
-                {selectedExpense.title}
+                <span className="font-semibold">Title:</span> {selectedExpense.title}
               </div>
               <div>
-                <span className="font-semibold">Date:</span>{" "}
-                {selectedExpense.date}
+                <span className="font-semibold">Date:</span> {formatDate(selectedExpense.date)}
               </div>
               <div>
-                <span className="font-semibold">Category:</span>{" "}
-                {selectedExpense.category}
+                <span className="font-semibold">Category:</span> {selectedExpense.category}
               </div>
               <div>
-                <span className="font-semibold">Amount:</span> $
-                {selectedExpense.amount.toFixed(2)}
+                <span className="font-semibold">Amount:</span> ${selectedExpense.amount.toFixed(2)}
               </div>
               <div>
-                <span className="font-semibold">Vendor:</span>{" "}
-                {selectedExpense.vendor}
+                <span className="font-semibold">Vendor:</span> {selectedExpense.vendor || "-"}
               </div>
               <div>
-                <span className="font-semibold">Vehicle:</span>{" "}
-                {selectedExpense.vehicle}
+                <span className="font-semibold">Vehicle:</span> {selectedExpense.vehicle || "-"}
               </div>
               <div>
-                <span className="font-semibold">Receipt:</span>{" "}
-                {selectedExpense.receipt}
+                <span className="font-semibold">Receipt:</span> {selectedExpense.receipt || "-"}
+              </div>
+              {selectedExpense.description && (
+                <div>
+                  <span className="font-semibold">Description:</span> {selectedExpense.description}
+                </div>
+              )}
+              <div>
+                <span className="font-semibold">Tax Deductible:</span> {selectedExpense.taxDeductible ? "Yes" : "No"}
               </div>
             </div>
           )}
@@ -396,6 +416,7 @@ export default function ExpensesPage() {
                 <Input
                   id="edit-amount"
                   placeholder="$"
+                  type="number"
                   value={editForm.amount}
                   onChange={(event) =>
                     setEditForm((prev) => ({
@@ -524,6 +545,7 @@ export default function ExpensesPage() {
                 <Input
                   id="exp-amount"
                   placeholder="$"
+                  type="number"
                   value={recordForm.amount}
                   onChange={(event) =>
                     setRecordForm((prev) => ({
@@ -594,14 +616,14 @@ export default function ExpensesPage() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="exp-receipt">Upload Receipt</Label>
+              <Label htmlFor="exp-receipt">Receipt Number</Label>
               <Input
                 id="exp-receipt"
-                type="file"
+                value={recordForm.receipt}
                 onChange={(event) =>
                   setRecordForm((prev) => ({
                     ...prev,
-                    receipt: event.target.files?.[0]?.name ?? "",
+                    receipt: event.target.value,
                   }))
                 }
               />
@@ -624,7 +646,7 @@ export default function ExpensesPage() {
               <Button variant="ghost" onClick={() => setIsRecordOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="primary" onClick={() => setIsRecordOpen(false)}>
+              <Button variant="primary" onClick={handleRecordExpense}>
                 Save
               </Button>
             </div>

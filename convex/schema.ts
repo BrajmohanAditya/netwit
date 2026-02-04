@@ -215,4 +215,20 @@ export default defineSchema({
   })
     .index("by_quoteNumber", ["quoteNumber"])
     .index("by_status", ["status"]),
+
+  expenses: defineTable({
+    title: v.string(),
+    category: v.string(),
+    amount: v.number(),
+    date: v.string(),
+    vendor: v.optional(v.string()),
+    vehicle: v.optional(v.string()),
+    receipt: v.optional(v.string()),
+    description: v.optional(v.string()),
+    taxDeductible: v.boolean(),
+    created_at: v.string(),
+    updated_at: v.string(),
+  })
+    .index("by_category", ["category"])
+    .index("by_date", ["date"]),
 });
