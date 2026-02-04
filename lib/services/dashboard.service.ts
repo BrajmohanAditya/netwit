@@ -31,3 +31,7 @@ export function getEmptyMetrics(): DashboardMetrics {
     revenueMonth: 0,
   };
 }
+
+export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
+  return getEmptyMetrics();
+}
