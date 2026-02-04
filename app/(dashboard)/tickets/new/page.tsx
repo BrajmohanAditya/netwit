@@ -243,7 +243,7 @@ export default function CreateTicketPage() {
                 the description for faster resolution.
               </p>
               <p>
-                Use "Urgent" priority only when the customer is blocked from
+                Use &quot;Urgent&quot; priority only when the customer is blocked from
                 taking delivery.
               </p>
             </CardContent>
