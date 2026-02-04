@@ -95,34 +95,36 @@ export default function ExpensesPage() {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
-  const handleView = (expense: Record<string, unknown>) => {
+  const handleView = (expense: unknown) => {
     setSelectedExpense(expense);
     setIsViewOpen(true);
   };
 
-  const handleEdit = (expense: Record<string, unknown>) => {
+  const handleEdit = (expense: unknown) => {
     setSelectedExpense(expense);
+    const exp = expense as { title?: string; category?: string; amount?: number; date?: string; vendor?: string; vehicle?: string; receipt?: string };
     setEditForm({
-      title: String(expense.title || ""),
-      category: String(expense.category || ""),
-      amount: String(expense.amount || ""),
-      date: String(expense.date || ""),
-      vendor: String(expense.vendor || ""),
-      vehicle: String(expense.vehicle || ""),
-      receipt: String(expense.receipt || ""),
+      title: String(exp.title || ""),
+      category: String(exp.category || ""),
+      amount: String(exp.amount || ""),
+      date: String(exp.date || ""),
+      vendor: String(exp.vendor || ""),
+      vehicle: String(exp.vehicle || ""),
+      receipt: String(exp.receipt || ""),
     });
     setIsEditOpen(true);
   };
 
   const handleSaveEdit = () => {
     if (!selectedExpense) return;
+    const exp = selectedExpense as { _id: { toString(): string }; date?: string };
     const parsedAmount = Number(editForm.amount || 0);
     updateExpense.mutate({
-      id: String(selectedExpense._id),
+      id: exp._id.toString(),
       title: editForm.title,
       category: editForm.category,
       amount: Number.isNaN(parsedAmount) ? 0 : parsedAmount,
-      date: editForm.date || String(selectedExpense.date),
+      date: editForm.date || String(exp.date),
       vendor: editForm.vendor,
       vehicle: editForm.vehicle,
       receipt: editForm.receipt,
@@ -131,9 +133,10 @@ export default function ExpensesPage() {
     toast.success("Expense updated");
   };
 
-  const handleDelete = (expense: Record<string, unknown>) => {
+  const handleDelete = (expense: unknown) => {
+    const exp = expense as { _id: { toString(): string } };
     if (confirm("Are you sure you want to delete this expense?")) {
-      deleteExpense.mutate(String(expense._id));
+      deleteExpense.mutate(exp._id.toString());
       toast.success("Expense deleted");
     }
   };
