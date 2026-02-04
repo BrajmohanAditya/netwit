@@ -77,11 +77,11 @@ export async function getInventoryStats() {
     ];
   }
 
-  const stats = data?.reduce((acc: any, vehicle: any) => {
+  const stats = (data || []).reduce((acc: Record<string, number>, vehicle: { status?: string | null }) => {
     const status = vehicle.status || 'Inactive';
     acc[status] = (acc[status] || 0) + 1;
     return acc;
-  }, {} as Record<string, number>) || {};
+  }, {} as Record<string, number>);
 
   return [
     { status: 'Active', count: stats['Active'] || 0 },
@@ -113,13 +113,13 @@ export async function getRevenueData() {
   }
 
   // Group by month
-  const monthlyRevenue = data?.reduce((acc: any, deal: any) => {
+  const monthlyRevenue = (data || []).reduce((acc: Record<string, number>, deal: { created_at: string; amount?: string | number | null }) => {
     const date = new Date(deal.created_at);
     const monthKey = date.toLocaleDateString('en-US', { month: 'short' });
     const amount = parseFloat(deal.amount?.toString() || '0') || 0;
     acc[monthKey] = (acc[monthKey] || 0) + amount;
     return acc;
-  }, {} as Record<string, number>) || {};
+  }, {} as Record<string, number>);
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const last6Months = months.slice(-6);
@@ -149,13 +149,12 @@ export async function getRecentLeads(limit: number = 5) {
     return [];
   }
 
-  // Transform data to match RecentLead interface
-  return (data || []).map((lead: any) => ({
+  return (data || []).map((lead: { id: string; status: string; created_at: string; customer?: unknown }) => ({
     id: lead.id,
     status: lead.status,
     created_at: lead.created_at,
     customer: Array.isArray(lead.customer) && lead.customer.length > 0
       ? lead.customer[0]
-      : (lead.customer as any) || undefined,
+      : undefined,
   }));
 }

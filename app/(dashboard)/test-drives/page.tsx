@@ -49,6 +49,9 @@ interface TestDriveItem {
   status: string;
   interest: number;
   nextSteps?: string;
+  duration?: string;
+  route?: string;
+  comments?: string;
 }
 
 interface TestDriveCalendarEvent {
@@ -146,7 +149,7 @@ export default function TestDrivesPage() {
   });
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [selectedDrive, setSelectedDrive] = useState<any>(null); // Use existing type or any for now
+  const [selectedDrive, setSelectedDrive] = useState<TestDriveItem | null>(null);
   const [editingId, setEditingId] = useState<Id<"testDrives"> | null>(null);
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -288,20 +291,20 @@ export default function TestDrivesPage() {
   const handleEdit = (drive: any) => {
     setEditingId(drive._id);
     setScheduleForm({
-      ...scheduleForm, // keeping defaults for missing fields
-      customer: drive.customerName || "",
-      vehicle: drive.vehicleName || "",
-      assignedStaff: drive.staffName || "",
+      ...scheduleForm,
+      customer: drive.customerName || drive.customer || "",
+      vehicle: drive.vehicleName || drive.vehicle || "",
+      assignedStaff: drive.staffName || drive.staff || "",
       scheduledDate: drive.date || "",
       scheduledTime: drive.time || "",
-      lead: drive.leadId || "",
-      duration: drive.duration || "1 hour",
-      route: drive.route || "Highway Test",
-      licenseNumber: drive.licenseNumber || "",
-      licenseIssued: drive.licenseIssued || "",
-      licenseExpires: drive.licenseExpires || "",
-      insuranceVerified: drive.insuranceVerified || false,
-      internalNotes: drive.comments || "",
+      lead: drive.nextSteps || "",
+      duration: "1 hour",
+      route: "Highway Test",
+      licenseNumber: "",
+      licenseIssued: "",
+      licenseExpires: "",
+      insuranceVerified: false,
+      internalNotes: "",
     });
     setIsScheduleOpen(true);
   };
@@ -756,98 +759,6 @@ export default function TestDrivesPage() {
               <Button variant="primary" size="sm">
                 Complete Test Drive
               </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="space-y-6">
-          <div className="text-sm font-semibold text-muted-foreground">
-            Complete Test Drive
-          </div>
-
-          <div className="grid gap-4">
-            <div className="grid gap-2 text-sm text-muted-foreground">
-              <div>Ended: 3:00 PM (auto)</div>
-              <div>Duration: 1 hour</div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="td-end-odometer">End Odometer</Label>
-                <Input id="td-end-odometer" placeholder="149,050" />
-              </div>
-              <div className="grid gap-2">
-                <Label>Distance</Label>
-                <div className="h-10 rounded-lg border border-input bg-muted/40 px-3 text-sm text-muted-foreground flex items-center">
-                  25 km (calc)
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Customer Feedback</Label>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                Interest
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <Star
-                      key={`feedback-star-${index}`}
-                      className="h-4 w-4 text-yellow-400 fill-current"
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="td-comments">Comments</Label>
-                <textarea
-                  id="td-comments"
-                  className="min-h-[80px] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="td-staff-notes">Staff Notes</Label>
-                <textarea
-                  id="td-staff-notes"
-                  className="min-h-[80px] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Next Steps</Label>
-              <div className="grid gap-2 text-sm text-muted-foreground">
-                {[
-                  "Schedule follow-up",
-                  "Send quote",
-                  "Another test drive",
-                  "Convert to deal",
-                  "No action",
-                ].map((step) => (
-                  <label key={step} className="flex items-center gap-2">
-                    <input type="radio" name="td-next-steps" />
-                    {step}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Button variant="primary" size="sm">
-                Complete &amp; Create Follow-up
-              </Button>
-            </div>
-
-            <div className="grid gap-2 text-xs text-muted-foreground">
-              <div className="font-semibold text-slate-600">Actions:</div>
-              <div>- Create follow-up task</div>
-              <div>- Send thank-you email</div>
-              <div>- Log in customer timeline</div>
-              <div>- Update lead status</div>
             </div>
           </div>
         </CardContent>

@@ -31,8 +31,27 @@ import { useCreateInvoice } from "@/hooks/use-invoices";
 import { toast } from "react-hot-toast";
 
 export default function NewInvoicePage() {
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
-  const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
+  interface Customer {
+    id: string;
+    full_name: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+  }
+
+  interface Vehicle {
+    id: string;
+    year: number;
+    make: string;
+    model: string;
+    vin?: string;
+    odometer?: number;
+    retail_price?: string | number | null;
+    status?: string;
+  }
+
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
 
   const { data: leads } = useLeads();
   const { data: vehicles } = useVehicles();
@@ -96,7 +115,7 @@ export default function NewInvoicePage() {
     });
   };
 
-  const activeVehicles = vehicles?.filter((v: any) => v.status === "Active") || [];
+  const activeVehicles = (vehicles || []).filter((v: { status?: string }) => v.status === "Active");
 
   return (
     <div className="p-6">

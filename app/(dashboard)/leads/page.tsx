@@ -93,10 +93,10 @@ export default function LeadsPage() {
     // Search filter
     const matchesSearch =
       searchQuery === "" ||
-      lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (lead.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
       (lead.email &&
         lead.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (lead.phone && lead.phone.includes(searchQuery));
+      (lead.phone && lead.phone.toLowerCase().includes(searchQuery.toLowerCase()));
 
     // Source filter
     const matchesSource =
@@ -150,15 +150,17 @@ export default function LeadsPage() {
   // Dynamic details derived from the lead object itself now
   const selectedDetails = selectedLead
     ? {
-        name: selectedLead.name,
+        name: selectedLead.name || "Unknown",
         phone: selectedLead.phone || "N/A",
         sourceLabel: selectedLead.source,
         vehicleLabel: selectedLead.interest_vehicle_id
           ? "Vehicle Interest"
           : "Vehicle TBD",
         assignedTo: selectedLead.assigned_to || "Unassigned",
-        createdLabel: new Date(selectedLead.created_at).toLocaleDateString(),
-        priority: "medium" as const, // Defaulting for now
+        createdLabel: selectedLead.created_at
+          ? new Date(selectedLead.created_at).toLocaleDateString()
+          : "Unknown",
+        priority: "medium" as const,
         email: selectedLead.email || "N/A",
         company: selectedLead.company || "Adaptus Auto",
       }
