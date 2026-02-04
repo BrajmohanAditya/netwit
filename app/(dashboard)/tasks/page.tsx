@@ -127,16 +127,17 @@ export default function TasksPage() {
     setIsTaskDialogOpen(true);
   };
 
-  const openEditDialog = (task: (typeof tasks)[number]) => {
+  const openEditDialog = (task: unknown) => {
+    const t = task as { _id: unknown; title: string; description?: string; assignedTo?: string; priority: string; status: string; dueDate?: string };
     setTaskDialogMode("edit");
     setTaskForm({
-      _id: String(task._id),
-      title: task.title,
-      description: task.description || "",
-      assignedTo: task.assignedTo || "",
-      priority: task.priority,
-      status: task.status,
-      dueDate: task.dueDate || "",
+      _id: String(t._id),
+      title: t.title,
+      description: t.description || "",
+      assignedTo: t.assignedTo || "",
+      priority: t.priority,
+      status: t.status,
+      dueDate: t.dueDate || "",
     });
     setIsTaskDialogOpen(true);
   };
