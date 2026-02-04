@@ -29,6 +29,8 @@ import { useLeads } from "@/hooks/use-leads";
 import { useVehicles } from "@/hooks/use-vehicles";
 import { useCreateInvoice } from "@/hooks/use-invoices";
 import { toast } from "react-hot-toast";
+import type { Id } from "@/convex/_generated/dataModel";
+import type { CreateInvoiceInput } from "@/hooks/use-invoices";
 
 export default function NewInvoicePage() {
   interface Customer {
@@ -89,10 +91,10 @@ export default function NewInvoicePage() {
       return;
     }
 
-    const invoiceData = {
+    const invoiceData: CreateInvoiceInput = {
       ...data,
-      customer_id: selectedCustomer.id,
-      vehicle_id: selectedVehicle?.id,
+      customer_id: selectedCustomer.id as Id<"customers">,
+      vehicle_id: selectedVehicle?.id as Id<"vehicles"> | undefined,
       payment_amount: calculator.calculation.subtotal,
       tax_amount: calculator.calculation.taxAmount,
       total: calculator.calculation.grandTotal,

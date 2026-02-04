@@ -1,12 +1,12 @@
 import { useMutation, useQuery } from "convex/react";
+import { useState } from "react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { InvoiceFormData } from "@/lib/validations/invoice";
 
-type CreateInvoiceInput = Omit<InvoiceFormData, "customer_id"> & {
+export type CreateInvoiceInput = Omit<InvoiceFormData, "customer_id"> & {
   customer_id?: Id<"customers"> | null;
   customer_name?: string;
-  line_items?: { description: string; amount: number }[];
 };
 
 export function useInvoices() {

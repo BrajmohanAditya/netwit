@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useCreateInvoice, useInvoices } from "@/hooks/use-invoices";
+import { useCreateInvoice, useInvoices, type CreateInvoiceInput } from "@/hooks/use-invoices";
 
 type InvoiceStatus = "Paid" | "Pending" | "Overdue" | "Draft";
 
@@ -195,7 +195,7 @@ export default function InvoicesPage() {
     const dueDate = new Date(createForm.dueDate);
     const invoiceNumber = getNextInvoiceNumber();
 
-    const payload = {
+    const payload: CreateInvoiceInput = {
       invoice_number: invoiceNumber,
       invoice_date: invoiceDate,
       due_date: dueDate,
@@ -206,7 +206,7 @@ export default function InvoicesPage() {
       tax_rate: 5,
       tax_amount: tax,
       total,
-      status: "Pending" as const,
+      status: "Pending",
       notes: createForm.customer
         ? `Customer: ${createForm.customer}`
         : undefined,
@@ -215,10 +215,12 @@ export default function InvoicesPage() {
         .map((item) => ({
           description: item.description || "Item",
           amount: Number(item.amount || 0),
+          quantity: 1,
+          unit_price: Number(item.amount || 0),
         })),
     };
 
-    createInvoice.mutate(payload, {
+    createInvoice.mutate(payload as CreateInvoiceInput, {
       onSuccess: () => {
         setIsCreateOpen(false);
         setLineItems([{ id: "line-1", description: "", amount: "" }]);
