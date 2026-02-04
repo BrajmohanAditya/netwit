@@ -344,7 +344,7 @@ export default function ExpensesPage() {
           <DialogHeader>
             <DialogTitle>Expense Details</DialogTitle>
           </DialogHeader>
-          {selectedExpense && (
+          {selectedExpense != null ? (
             <div className="grid gap-3 text-sm">
               {(() => {
                 const exp = selectedExpense as Record<string, unknown>;
@@ -375,7 +375,7 @@ export default function ExpensesPage() {
                 );
               })()}
             </div>
-          )}
+          ) : null}
         </DialogContent>
       </Dialog>
 
