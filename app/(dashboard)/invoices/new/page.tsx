@@ -233,16 +233,23 @@ export default function NewInvoicePage() {
                       className="w-full p-2 border rounded-md"
                       value={selectedCustomer?.id || ""}
                       onChange={(e) => {
-                        const customer = leads?.find(
-                          (l: any) => l.id === e.target.value,
+                        const lead = leads?.find(
+                          (l) => l._id === e.target.value,
                         );
+                        const customer: Customer | null = lead ? {
+                          id: lead._id,
+                          full_name: lead.name || "Unknown",
+                          phone: lead.phone,
+                          email: lead.email,
+                          address: "",
+                        } : null;
                         setSelectedCustomer(customer);
                       }}
                     >
                       <option value="">Select a customer</option>
-                      {leads?.map((lead: any) => (
-                        <option key={lead.id} value={lead.id}>
-                          {lead.full_name} - {lead.phone}
+                      {leads?.map((lead) => (
+                        <option key={lead._id} value={lead._id}>
+                          {lead.name} - {lead.phone}
                         </option>
                       ))}
                     </select>
@@ -256,9 +263,19 @@ export default function NewInvoicePage() {
                       className="w-full p-2 border rounded-md"
                       value={selectedVehicle?.id || ""}
                       onChange={(e) => {
-                        const vehicle = activeVehicles.find(
-                          (v: any) => v.id === e.target.value,
+                        const v = vehicles?.find(
+                          (v) => v._id === e.target.value,
                         );
+                        const vehicle: Vehicle | null = v ? {
+                          id: v._id,
+                          year: v.year,
+                          make: v.make,
+                          model: v.model,
+                          vin: v.vin,
+                          odometer: v.mileage,
+                          retail_price: v.price,
+                          status: v.status,
+                        } : null;
                         setSelectedVehicle(vehicle);
                         if (vehicle) {
                           const retailPrice =
@@ -270,10 +287,10 @@ export default function NewInvoicePage() {
                       }}
                     >
                       <option value="">Select a vehicle</option>
-                      {activeVehicles.map((vehicle: any) => (
-                        <option key={vehicle.id} value={vehicle.id}>
-                          {vehicle.year} {vehicle.make} {vehicle.model} -{" "}
-                          {vehicle.vin?.slice(-6)}
+                      {activeVehicles.map((v) => (
+                        <option key={v._id} value={v._id}>
+                          {v.year} {v.make} {v.model} -{" "}
+                          {v.vin?.slice(-6)}
                         </option>
                       ))}
                     </select>
