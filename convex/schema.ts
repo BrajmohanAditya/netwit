@@ -44,24 +44,32 @@ export default defineSchema({
     .index("by_assigned_to", ["assigned_to"]),
 
   invoices: defineTable({
-    invoiceNumber: v.string(),
-    customerName: v.string(),
-    customerEmail: v.string(),
-    amount: v.number(),
-    status: v.string(), // "Paid", "Pending", "Overdue"
-    date: v.string(),
-    dueDate: v.string(),
-    items: v.array(
-      v.object({
-        description: v.string(),
-        quantity: v.number(),
-        price: v.number(),
-      }),
+    invoice_number: v.string(),
+    invoice_date: v.string(),
+    due_date: v.string(),
+    customer_id: v.optional(v.union(v.id("customers"), v.null())),
+    customer_name: v.optional(v.string()),
+    package_name: v.optional(v.string()),
+    payment_amount: v.number(),
+    tax_rate: v.number(),
+    tax_amount: v.number(),
+    total: v.number(),
+    status: v.string(), // "Paid", "Pending", "Overdue", "Draft"
+    notes: v.optional(v.string()),
+    line_items: v.optional(
+      v.array(
+        v.object({
+          description: v.string(),
+          amount: v.number(),
+        }),
+      ),
     ),
     created_at: v.string(),
+    updated_at: v.string(),
   })
-    .index("by_invoiceNumber", ["invoiceNumber"])
-    .index("by_status", ["status"]),
+    .index("by_invoice_number", ["invoice_number"])
+    .index("by_status", ["status"])
+    .index("by_invoice_date", ["invoice_date"]),
 
   users: defineTable({
     name: v.string(),

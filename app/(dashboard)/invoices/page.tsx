@@ -199,7 +199,8 @@ export default function InvoicesPage() {
       invoice_number: invoiceNumber,
       invoice_date: invoiceDate,
       due_date: dueDate,
-      customer_id: null,
+      customer_id: undefined,
+      customer_name: createForm.customer || undefined,
       package_name: createForm.packageName || "Custom",
       payment_amount: subtotal,
       tax_rate: 5,
@@ -209,6 +210,12 @@ export default function InvoicesPage() {
       notes: createForm.customer
         ? `Customer: ${createForm.customer}`
         : undefined,
+      line_items: lineItems
+        .filter((item) => item.description || item.amount)
+        .map((item) => ({
+          description: item.description || "Item",
+          amount: Number(item.amount || 0),
+        })),
     };
 
     createInvoice.mutate(payload, {
@@ -282,7 +289,7 @@ export default function InvoicesPage() {
         id: invoice.id || invoice.invoice_number || `tmp-${index}`,
         invoiceNumber: invoice.invoice_number || "INV-0000",
         packageName: invoice.package_name || "Custom",
-        customer: invoice.customer?.name || "Unknown",
+        customer: invoice.customer_name || invoice.customer?.name || "Unknown",
         date: formatDisplayDate(invoiceDate),
         dueDate: formatDisplayDate(dueDate),
         amount: Number(invoice.total ?? invoice.payment_amount ?? 0),

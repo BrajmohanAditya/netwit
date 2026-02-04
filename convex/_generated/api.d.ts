@@ -12,6 +12,7 @@ import type * as calendar from "../calendar.js";
 import type * as customers from "../customers.js";
 import type * as deals from "../deals.js";
 import type * as followUps from "../followUps.js";
+import type * as invoices from "../invoices.js";
 import type * as leads from "../leads.js";
 import type * as purchaseHistory from "../purchaseHistory.js";
 import type * as quotations from "../quotations.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   customers: typeof customers;
   deals: typeof deals;
   followUps: typeof followUps;
+  invoices: typeof invoices;
   leads: typeof leads;
   purchaseHistory: typeof purchaseHistory;
   quotations: typeof quotations;
