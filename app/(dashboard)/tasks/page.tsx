@@ -14,45 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-const initialTasks = [
-  {
-    id: "T-101",
-    title: "Call John Smith",
-    description: "Follow up on financing options and schedule a visit.",
-    assignedTo: "Ava Carter",
-    priority: "High",
-    status: "Pending",
-    dueDate: "2026-01-24",
-  },
-  {
-    id: "T-102",
-    title: "Prepare financing docs",
-    description: "Finalize credit application paperwork.",
-    assignedTo: "Noah Reed",
-    priority: "Urgent",
-    status: "In Progress",
-    dueDate: "2026-01-24",
-  },
-  {
-    id: "T-103",
-    title: "Schedule delivery",
-    description: "Coordinate pickup date and confirm details.",
-    assignedTo: "Emma Hart",
-    priority: "Medium",
-    status: "Pending",
-    dueDate: "2026-01-26",
-  },
-  {
-    id: "T-104",
-    title: "Update trade-in appraisal",
-    description: "Update appraisal with latest inspection notes.",
-    assignedTo: "Mason Gray",
-    priority: "Low",
-    status: "Completed",
-    dueDate: "2026-01-20",
-  },
-];
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from "@/hooks/use-tasks";
+import { toast } from "react-hot-toast";
 
 const teamMembers = ["Ava Carter", "Noah Reed", "Emma Hart", "Mason Gray"];
 
@@ -70,9 +33,22 @@ const statusStyles: Record<string, string> = {
   Cancelled: "bg-gray-200 text-gray-600",
 };
 
+type TaskForm = {
+  _id?: string;
+  title: string;
+  description: string;
+  assignedTo: string;
+  priority: string;
+  status: string;
+  dueDate: string;
+};
+
 export default function TasksPage() {
   const currentUser = "Ava Carter";
-  const [taskList, setTaskList] = useState(initialTasks);
+  const { data: tasks, isLoading } = useTasks();
+  const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
   const [view, setView] = useState("My Tasks");
   const [filters, setFilters] = useState({
     assignedTo: "",
@@ -84,8 +60,7 @@ export default function TasksPage() {
   const [taskDialogMode, setTaskDialogMode] = useState<"create" | "edit">(
     "create",
   );
-  const [taskForm, setTaskForm] = useState({
-    id: "",
+  const [taskForm, setTaskForm] = useState<TaskForm>({
     title: "",
     description: "",
     assignedTo: "",
@@ -95,14 +70,16 @@ export default function TasksPage() {
   });
 
   const filteredTasks = useMemo(() => {
-    let data = taskList;
+    if (!tasks) return [];
+
+    let data = [...tasks];
 
     if (view === "My Tasks") {
       data = data.filter((task) => task.assignedTo === currentUser);
     }
 
     if (view === "Team Tasks") {
-      data = data.filter((task) => teamMembers.includes(task.assignedTo));
+      data = data.filter((task) => teamMembers.includes(task.assignedTo || ""));
     }
 
     if (filters.assignedTo) {
@@ -122,7 +99,7 @@ export default function TasksPage() {
     }
 
     return data;
-  }, [view, filters, currentUser, taskList]);
+  }, [view, filters, currentUser, tasks]);
 
   const stats = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -130,26 +107,16 @@ export default function TasksPage() {
       pending: filteredTasks.filter((task) => task.status === "Pending").length,
       dueToday: filteredTasks.filter((task) => task.dueDate === today).length,
       overdue: filteredTasks.filter(
-        (task) => task.dueDate < today && task.status !== "Completed",
+        (task) => task.dueDate && task.dueDate < today && task.status !== "Completed",
       ).length,
       completed: filteredTasks.filter((task) => task.status === "Completed")
         .length,
     };
   }, [filteredTasks]);
 
-  const getNextTaskId = () => {
-    const lastNumber = taskList
-      .map((task) => Number(task.id.replace("T-", "")))
-      .filter((value) => !Number.isNaN(value))
-      .sort((a, b) => b - a)[0];
-    const nextNumber = (lastNumber || 100) + 1;
-    return `T-${nextNumber}`;
-  };
-
   const openCreateDialog = () => {
     setTaskDialogMode("create");
     setTaskForm({
-      id: "",
       title: "",
       description: "",
       assignedTo: "",
@@ -160,30 +127,60 @@ export default function TasksPage() {
     setIsTaskDialogOpen(true);
   };
 
-  const openEditDialog = (task: (typeof taskList)[number]) => {
+  const openEditDialog = (task: (typeof tasks)[number]) => {
     setTaskDialogMode("edit");
-    setTaskForm({ ...task });
+    setTaskForm({
+      _id: String(task._id),
+      title: task.title,
+      description: task.description || "",
+      assignedTo: task.assignedTo || "",
+      priority: task.priority,
+      status: task.status,
+      dueDate: task.dueDate || "",
+    });
     setIsTaskDialogOpen(true);
   };
 
   const handleSaveTask = () => {
     if (!taskForm.title.trim()) {
+      toast.error("Please enter a task title");
       return;
     }
 
     if (taskDialogMode === "create") {
-      const newTask = {
-        ...taskForm,
-        id: getNextTaskId(),
-      };
-      setTaskList((prev) => [newTask, ...prev]);
+      createTask.mutate({
+        title: taskForm.title,
+        description: taskForm.description,
+        assignedTo: taskForm.assignedTo,
+        priority: taskForm.priority,
+        status: taskForm.status,
+        dueDate: taskForm.dueDate || undefined,
+      });
+      toast.success("Task created successfully");
     } else {
-      setTaskList((prev) =>
-        prev.map((task) => (task.id === taskForm.id ? taskForm : task)),
-      );
+      updateTask.mutate({
+        id: taskForm._id!,
+        title: taskForm.title,
+        description: taskForm.description,
+        assignedTo: taskForm.assignedTo,
+        priority: taskForm.priority,
+        status: taskForm.status,
+        dueDate: taskForm.dueDate || undefined,
+      });
+      toast.success("Task updated successfully");
     }
 
     setIsTaskDialogOpen(false);
+  };
+
+  const handleDeleteTask = (id: string) => {
+    deleteTask.mutate(id);
+    toast.success("Task deleted");
+  };
+
+  const formatDate = (dateStr: string | undefined) => {
+    if (!dateStr) return "-";
+    return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
   return (
@@ -342,7 +339,16 @@ export default function TasksPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredTasks.length === 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="py-6 text-center text-sm text-muted"
+                    >
+                      Loading tasks...
+                    </td>
+                  </tr>
+                ) : filteredTasks.length === 0 ? (
                   <tr>
                     <td
                       colSpan={7}
@@ -353,7 +359,7 @@ export default function TasksPage() {
                   </tr>
                 ) : (
                   filteredTasks.map((task) => (
-                    <tr key={task.id} className="border-b border-gray-100">
+                    <tr key={String(task._id)} className="border-b border-gray-100">
                       <td className="py-3 pr-2">
                         <input type="checkbox" />
                       </td>
@@ -361,9 +367,9 @@ export default function TasksPage() {
                         <div className="font-medium text-heading">
                           {task.title}
                         </div>
-                        <div className="text-xs text-muted">{task.id}</div>
+                        <div className="text-xs text-muted">{String(task._id).slice(0, 8)}</div>
                       </td>
-                      <td className="py-3 pr-4">{task.assignedTo}</td>
+                      <td className="py-3 pr-4">{task.assignedTo || "-"}</td>
                       <td className="py-3 pr-4">
                         <span
                           className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${priorityStyles[task.priority]
@@ -380,14 +386,22 @@ export default function TasksPage() {
                           {task.status}
                         </span>
                       </td>
-                      <td className="py-3 pr-4">{task.dueDate}</td>
+                      <td className="py-3 pr-4">{formatDate(task.dueDate)}</td>
                       <td className="py-3">
-                        <button
-                          className="text-blue-600 hover:text-blue-700 text-xs font-medium"
-                          onClick={() => openEditDialog(task)}
-                        >
-                          Edit
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button
+                            className="text-blue-600 hover:text-blue-700 text-xs font-medium"
+                            onClick={() => openEditDialog(task)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="text-red-600 hover:text-red-700 text-xs font-medium"
+                            onClick={() => handleDeleteTask(String(task._id))}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

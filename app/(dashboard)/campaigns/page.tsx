@@ -29,62 +29,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useCampaigns, useCampaignStats, useCreateCampaign, useDeleteCampaign } from "@/hooks/use-social-campaigns";
+import { toast } from "react-hot-toast";
 
 type CampaignStatus = "Active" | "Scheduled" | "Completed" | "Draft";
 type CampaignType = "Email" | "SMS" | "Social";
-
-interface Campaign {
-  id: string;
-  name: string;
-  type: CampaignType;
-  status: CampaignStatus;
-  audience: string;
-  sent?: number;
-  opened?: number;
-  clicked?: number;
-  date: string;
-}
-
-const campaigns: Campaign[] = [
-  {
-    id: "cmp-1",
-    name: "Winter Service Special",
-    type: "Email",
-    status: "Active",
-    audience: "All Past Service Customers",
-    sent: 1250,
-    opened: 450,
-    clicked: 120,
-    date: "Jan 24, 2026",
-  },
-  {
-    id: "cmp-2",
-    name: "New SUV Arrivals",
-    type: "Social",
-    status: "Completed",
-    audience: "Facebook Followers",
-    sent: 5000,
-    opened: 2100,
-    clicked: 350,
-    date: "Jan 10, 2026",
-  },
-  {
-    id: "cmp-3",
-    name: "Loyalty Discount",
-    type: "SMS",
-    status: "Scheduled",
-    audience: "VIP Customers",
-    date: "Feb 01, 2026",
-  },
-  {
-    id: "cmp-4",
-    name: "Spring Tire Swap",
-    type: "Email",
-    status: "Draft",
-    audience: "Tire Storage Customers",
-    date: "Mar 15, 2026",
-  },
-];
 
 const getCampaignStatusVariant = (status: CampaignStatus) => {
   switch (status) {
@@ -108,7 +57,39 @@ const typeIcons: Record<CampaignType, any> = {
 };
 
 export default function CampaignsPage() {
+  const { data: campaigns, isLoading } = useCampaigns();
+  const { data: stats } = useCampaignStats();
+  const createCampaign = useCreateCampaign();
+  const deleteCampaign = useDeleteCampaign();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newCampaign, setNewCampaign] = useState({
+    name: "",
+    type: "Email",
+    audience: "all",
+    scheduledDate: "",
+  });
+
+  const handleCreateCampaign = () => {
+    if (!newCampaign.name) {
+      toast.error("Please enter a campaign name");
+      return;
+    }
+    createCampaign.mutate({
+      name: newCampaign.name,
+      type: newCampaign.type,
+      status: newCampaign.scheduledDate ? "Scheduled" : "Draft",
+      audience: newCampaign.audience,
+      scheduledDate: newCampaign.scheduledDate || undefined,
+    });
+    setIsCreateOpen(false);
+    setNewCampaign({ name: "", type: "Email", audience: "all", scheduledDate: "" });
+    toast.success("Campaign created successfully");
+  };
+
+  const handleDeleteCampaign = (id: string) => {
+    deleteCampaign.mutate(id);
+    toast.success("Campaign deleted");
+  };
 
   return (
     <div className="flex-1 space-y-6 px-4 py-6 sm:px-6">
@@ -131,8 +112,8 @@ export default function CampaignsPage() {
             <Megaphone className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">+1 since last month</p>
+            <div className="text-2xl font-bold">{stats?.activeCampaigns || 0}</div>
+            <p className="text-xs text-muted-foreground">Active campaigns</p>
           </CardContent>
         </Card>
         <Card>
@@ -141,10 +122,8 @@ export default function CampaignsPage() {
             <Mail className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12,450</div>
-            <p className="text-xs text-muted-foreground">
-              +12% from last month
-            </p>
+            <div className="text-2xl font-bold">{stats?.emailsSent?.toLocaleString() || "0"}</div>
+            <p className="text-xs text-muted-foreground">Total sent</p>
           </CardContent>
         </Card>
         <Card>
@@ -153,10 +132,8 @@ export default function CampaignsPage() {
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">32.4%</div>
-            <p className="text-xs text-muted-foreground">
-              +2.1% from last month
-            </p>
+            <div className="text-2xl font-bold">{stats?.avgOpenRate || 0}%</div>
+            <p className="text-xs text-muted-foreground">Average rate</p>
           </CardContent>
         </Card>
         <Card>
@@ -165,10 +142,8 @@ export default function CampaignsPage() {
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">145</div>
-            <p className="text-xs text-muted-foreground">
-              +18 since last month
-            </p>
+            <div className="text-2xl font-bold">{stats?.conversions || 0}</div>
+            <p className="text-xs text-muted-foreground">Total conversions</p>
           </CardContent>
         </Card>
       </div>
@@ -176,10 +151,16 @@ export default function CampaignsPage() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Recent Campaigns</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {campaigns.map((campaign) => {
-            const Icon = typeIcons[campaign.type];
-            return (
-              <Card key={campaign.id} className="relative overflow-hidden">
+          {isLoading ? (
+            <div className="col-span-full py-8 text-center text-muted">Loading campaigns...</div>
+          ) : campaigns && campaigns.length > 0 ? (
+            campaigns.map((campaign) => {
+              const Icon = typeIcons[campaign.type as CampaignType] || Megaphone;
+              const formatDate = (timestamp: number) => {
+                return new Date(timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+              };
+              return (
+              <Card key={String(campaign._id)} className="relative overflow-hidden">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
@@ -192,7 +173,7 @@ export default function CampaignsPage() {
                         </CardTitle>
                         <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                           <CalendarIcon className="h-3 w-3" />
-                          {campaign.date}
+                          {formatDate(campaign._creationTime)}
                         </div>
                       </div>
                     </div>
@@ -206,7 +187,10 @@ export default function CampaignsPage() {
                         <DropdownMenuItem>View Details</DropdownMenuItem>
                         <DropdownMenuItem>Edit Campaign</DropdownMenuItem>
                         <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem 
+                          className="text-red-600"
+                          onClick={() => handleDeleteCampaign(String(campaign._id))}
+                        >
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -215,7 +199,7 @@ export default function CampaignsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge variant={getCampaignStatusVariant(campaign.status)}>
+                    <Badge variant={getCampaignStatusVariant(campaign.status as CampaignStatus)}>
                       {campaign.status}
                     </Badge>
                     <Badge variant="secondary">{campaign.type}</Badge>
@@ -224,7 +208,7 @@ export default function CampaignsPage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Audience:</span>
-                      <span className="font-medium">{campaign.audience}</span>
+                      <span className="font-medium">{campaign.audience || "-"}</span>
                     </div>
                     {campaign.status !== "Scheduled" &&
                       campaign.status !== "Draft" && (
@@ -232,7 +216,7 @@ export default function CampaignsPage() {
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Sent:</span>
                             <span className="font-medium">
-                              {campaign.sent?.toLocaleString()}
+                              {campaign.sent?.toLocaleString() || "0"}
                             </span>
                           </div>
                           <div className="flex justify-between">
@@ -240,10 +224,10 @@ export default function CampaignsPage() {
                               Opened:
                             </span>
                             <span className="font-medium">
-                              {campaign.opened?.toLocaleString()} (
-                              {Math.round(
-                                (campaign.opened! / campaign.sent!) * 100,
-                              )}
+                              {campaign.opened?.toLocaleString() || "0"} (
+                              {campaign.sent && campaign.opened 
+                                ? Math.round((campaign.opened / campaign.sent) * 100)
+                                : 0}
                               %)
                             </span>
                           </div>
@@ -253,7 +237,10 @@ export default function CampaignsPage() {
                 </CardContent>
               </Card>
             );
-          })}
+          })
+          ) : (
+            <div className="col-span-full py-8 text-center text-muted">No campaigns found</div>
+          )}
         </div>
       </div>
 
@@ -268,19 +255,29 @@ export default function CampaignsPage() {
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label>Campaign Name</Label>
-              <Input placeholder="e.g. Summer Sale" />
+              <Input 
+                placeholder="e.g. Summer Sale" 
+                value={newCampaign.name}
+                onChange={(e) => setNewCampaign(p => ({ ...p, name: e.target.value }))}
+              />
             </div>
             <div className="space-y-2">
               <Label>Campaign Type</Label>
-              <Select>
-                <option value="email">Email Blast</option>
-                <option value="sms">SMS Broadcast</option>
-                <option value="social">Social Media Post</option>
+              <Select
+                value={newCampaign.type}
+                onChange={(e) => setNewCampaign(p => ({ ...p, type: e.target.value }))}
+              >
+                <option value="Email">Email Blast</option>
+                <option value="SMS">SMS Broadcast</option>
+                <option value="Social">Social Media Post</option>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Target Audience</Label>
-              <Select>
+              <Select
+                value={newCampaign.audience}
+                onChange={(e) => setNewCampaign(p => ({ ...p, audience: e.target.value }))}
+              >
                 <option value="all">All Customers</option>
                 <option value="leads">New Leads</option>
                 <option value="service">Service Customers</option>
@@ -289,14 +286,18 @@ export default function CampaignsPage() {
             </div>
             <div className="space-y-2">
               <Label>Scheduled Date</Label>
-              <Input type="date" />
+              <Input 
+                type="date" 
+                value={newCampaign.scheduledDate}
+                onChange={(e) => setNewCampaign(p => ({ ...p, scheduledDate: e.target.value }))}
+              />
             </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => setIsCreateOpen(false)}>Continue</Button>
+            <Button onClick={handleCreateCampaign}>Continue</Button>
           </div>
         </DialogContent>
       </Dialog>

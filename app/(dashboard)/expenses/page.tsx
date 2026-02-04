@@ -43,8 +43,18 @@ const expenseCategories = [
   "Miscellaneous",
 ];
 
+interface ExpenseFormData {
+  title: string;
+  category: string;
+  amount: string;
+  date: string;
+  vendor: string;
+  vehicle: string;
+  receipt: string;
+}
+
 export default function ExpensesPage() {
-  const { data: expenses, isLoading } = useExpenses();
+  const { data: expensesData, isLoading } = useExpenses();
   const { data: stats } = useExpenseStats();
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
@@ -58,10 +68,8 @@ export default function ExpensesPage() {
   const [isRecordOpen, setIsRecordOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<typeof expenses extends Array<infer T> ? T : never | null>(
-    null,
-  );
-  const [editForm, setEditForm] = useState({
+  const [selectedExpense, setSelectedExpense] = useState<Record<string, unknown> | null>(null);
+  const [editForm, setEditForm] = useState<ExpenseFormData>({
     title: "",
     category: "",
     amount: "",
@@ -87,21 +95,21 @@ export default function ExpensesPage() {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
-  const handleView = (expense: typeof expenses extends Array<infer T> ? T : never) => {
+  const handleView = (expense: Record<string, unknown>) => {
     setSelectedExpense(expense);
     setIsViewOpen(true);
   };
 
-  const handleEdit = (expense: typeof expenses extends Array<infer T> ? T : never) => {
+  const handleEdit = (expense: Record<string, unknown>) => {
     setSelectedExpense(expense);
     setEditForm({
-      title: expense.title,
-      category: expense.category,
-      amount: expense.amount.toString(),
-      date: expense.date,
-      vendor: expense.vendor || "",
-      vehicle: expense.vehicle || "",
-      receipt: expense.receipt || "",
+      title: String(expense.title || ""),
+      category: String(expense.category || ""),
+      amount: String(expense.amount || ""),
+      date: String(expense.date || ""),
+      vendor: String(expense.vendor || ""),
+      vehicle: String(expense.vehicle || ""),
+      receipt: String(expense.receipt || ""),
     });
     setIsEditOpen(true);
   };
@@ -110,11 +118,11 @@ export default function ExpensesPage() {
     if (!selectedExpense) return;
     const parsedAmount = Number(editForm.amount || 0);
     updateExpense.mutate({
-      id: selectedExpense._id,
+      id: String(selectedExpense._id),
       title: editForm.title,
       category: editForm.category,
       amount: Number.isNaN(parsedAmount) ? 0 : parsedAmount,
-      date: editForm.date || selectedExpense.date,
+      date: editForm.date || String(selectedExpense.date),
       vendor: editForm.vendor,
       vehicle: editForm.vehicle,
       receipt: editForm.receipt,
@@ -123,9 +131,9 @@ export default function ExpensesPage() {
     toast.success("Expense updated");
   };
 
-  const handleDelete = (expense: typeof expenses extends Array<infer T> ? T : never) => {
+  const handleDelete = (expense: Record<string, unknown>) => {
     if (confirm("Are you sure you want to delete this expense?")) {
-      deleteExpense.mutate(expense._id);
+      deleteExpense.mutate(String(expense._id));
       toast.success("Expense deleted");
     }
   };
@@ -162,7 +170,7 @@ export default function ExpensesPage() {
     toast.success("Expense recorded");
   };
 
-  const filteredExpenses = (expenses || []).filter((expense) => {
+  const filteredExpenses = (expensesData || []).filter((expense) => {
     if (filters.category && expense.category !== filters.category) return false;
     if (filters.vehicle && !expense.vehicle?.toLowerCase().includes(filters.vehicle.toLowerCase())) return false;
     return true;
@@ -272,7 +280,7 @@ export default function ExpensesPage() {
               </TableHeader>
               <TableBody>
                 {filteredExpenses.map((expense) => (
-                  <TableRow key={expense._id}>
+                  <TableRow key={String(expense._id)}>
                     <TableCell>{formatDate(expense.date)}</TableCell>
                     <TableCell className="font-medium">{expense.title}</TableCell>
                     <TableCell>
@@ -336,33 +344,25 @@ export default function ExpensesPage() {
           {selectedExpense && (
             <div className="grid gap-3 text-sm">
               <div>
-                <span className="font-semibold">Title:</span> {selectedExpense.title}
+                <span className="font-semibold">Title:</span> {String(selectedExpense.title || "")}
               </div>
               <div>
-                <span className="font-semibold">Date:</span> {formatDate(selectedExpense.date)}
+                <span className="font-semibold">Date:</span> {formatDate(String(selectedExpense.date || ""))}
               </div>
               <div>
-                <span className="font-semibold">Category:</span> {selectedExpense.category}
+                <span className="font-semibold">Category:</span> {String(selectedExpense.category || "")}
               </div>
               <div>
-                <span className="font-semibold">Amount:</span> ${selectedExpense.amount.toFixed(2)}
+                <span className="font-semibold">Amount:</span> ${Number(selectedExpense.amount || 0).toFixed(2)}
               </div>
               <div>
-                <span className="font-semibold">Vendor:</span> {selectedExpense.vendor || "-"}
+                <span className="font-semibold">Vendor:</span> {String(selectedExpense.vendor || "-")}
               </div>
               <div>
-                <span className="font-semibold">Vehicle:</span> {selectedExpense.vehicle || "-"}
+                <span className="font-semibold">Vehicle:</span> {String(selectedExpense.vehicle || "-")}
               </div>
               <div>
-                <span className="font-semibold">Receipt:</span> {selectedExpense.receipt || "-"}
-              </div>
-              {selectedExpense.description && (
-                <div>
-                  <span className="font-semibold">Description:</span> {selectedExpense.description}
-                </div>
-              )}
-              <div>
-                <span className="font-semibold">Tax Deductible:</span> {selectedExpense.taxDeductible ? "Yes" : "No"}
+                <span className="font-semibold">Receipt:</span> {String(selectedExpense.receipt || "-")}
               </div>
             </div>
           )}

@@ -231,4 +231,83 @@ export default defineSchema({
   })
     .index("by_category", ["category"])
     .index("by_date", ["date"]),
+
+  socialPosts: defineTable({
+    vehicleId: v.optional(v.string()),
+    vehicleName: v.optional(v.string()),
+    platform: v.string(),
+    status: v.string(),
+    caption: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
+    scheduledDate: v.optional(v.string()),
+    engagement: v.optional(v.object({
+      likes: v.number(),
+      shares: v.number(),
+      comments: v.number(),
+    })),
+    created_at: v.string(),
+  })
+    .index("by_status", ["status"])
+    .index("by_platform", ["platform"]),
+
+  campaigns: defineTable({
+    name: v.string(),
+    type: v.string(),
+    status: v.string(),
+    audience: v.optional(v.string()),
+    content: v.optional(v.string()),
+    scheduledDate: v.optional(v.string()),
+    sent: v.optional(v.number()),
+    opened: v.optional(v.number()),
+    clicked: v.optional(v.number()),
+    created_at: v.string(),
+  })
+    .index("by_status", ["status"])
+    .index("by_type", ["type"]),
+
+  tickets: defineTable({
+    ticketId: v.string(),
+    subject: v.string(),
+    customer: v.string(),
+    priority: v.string(),
+    status: v.string(),
+    description: v.optional(v.string()),
+    assignedTo: v.optional(v.string()),
+    created_at: v.string(),
+    updated_at: v.string(),
+  })
+    .index("by_status", ["status"])
+    .index("by_priority", ["priority"]),
+
+  businessSettings: defineTable({
+    name: v.optional(v.string()),
+    website: v.optional(v.string()),
+    license: v.optional(v.string()),
+    gst: v.optional(v.string()),
+    pst: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    fax: v.optional(v.string()),
+    email: v.optional(v.string()),
+    street: v.optional(v.string()),
+    city: v.optional(v.string()),
+    province: v.optional(v.string()),
+    postalCode: v.optional(v.string()),
+    country: v.optional(v.string()),
+    ownerName: v.optional(v.string()),
+    ownerPhone: v.optional(v.string()),
+    ownerEmail: v.optional(v.string()),
+    downPayment: v.optional(v.number()),
+    duration: v.optional(v.number()),
+    salesTax: v.optional(v.number()),
+    interestRate: v.optional(v.number()),
+    frequency: v.optional(v.string()),
+    logoUrl: v.optional(v.string()),
+    fixedCosts: v.optional(v.array(v.object({
+      name: v.string(),
+      price: v.number(),
+      tax: v.boolean(),
+    }))),
+    created_at: v.string(),
+    updated_at: v.string(),
+  }),
 });

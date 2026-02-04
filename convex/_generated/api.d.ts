@@ -15,8 +15,10 @@ import type * as expenses from "../expenses.js";
 import type * as followUps from "../followUps.js";
 import type * as invoices from "../invoices.js";
 import type * as leads from "../leads.js";
+import type * as marketing from "../marketing.js";
 import type * as purchaseHistory from "../purchaseHistory.js";
 import type * as quotations from "../quotations.js";
+import type * as reports from "../reports.js";
 import type * as testDrives from "../testDrives.js";
 import type * as vehicles from "../vehicles.js";
 
@@ -34,8 +36,10 @@ declare const fullApi: ApiFromModules<{
   followUps: typeof followUps;
   invoices: typeof invoices;
   leads: typeof leads;
+  marketing: typeof marketing;
   purchaseHistory: typeof purchaseHistory;
   quotations: typeof quotations;
+  reports: typeof reports;
   testDrives: typeof testDrives;
   vehicles: typeof vehicles;
 }>;

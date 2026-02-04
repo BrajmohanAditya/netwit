@@ -4,7 +4,7 @@ import { useConvex } from "convex/react";
 import type { Id } from "@/convex/_generated/dataModel";
 
 export interface Expense {
-  _id: string;
+  _id: Id<"expenses">;
   _creationTime: number;
   title: string;
   category: string;
@@ -25,7 +25,8 @@ export function useExpenses() {
   return useQuery({
     queryKey: ["expenses"],
     queryFn: async () => {
-      return await convex.query(api.expenses.list) as Expense[];
+      const result = await convex.query(api.expenses.list);
+      return result as Expense[];
     },
   });
 }

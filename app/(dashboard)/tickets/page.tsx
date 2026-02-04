@@ -5,39 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
-
-const tickets = [
-  {
-    id: "T-001",
-    subject: "Question about financing",
-    customer: "John Smith",
-    assignedTo: "Agam",
-    priority: "Medium",
-    status: "Open",
-    created: "2026-01-20",
-    updated: "2026-01-24",
-  },
-  {
-    id: "T-002",
-    subject: "Delivery timing update",
-    customer: "Emma Hart",
-    assignedTo: "Ava Carter",
-    priority: "High",
-    status: "In Progress",
-    created: "2026-01-18",
-    updated: "2026-01-23",
-  },
-  {
-    id: "T-003",
-    subject: "Warranty coverage details",
-    customer: "Noah Reed",
-    assignedTo: "Mason Gray",
-    priority: "Low",
-    status: "Resolved",
-    created: "2026-01-10",
-    updated: "2026-01-19",
-  },
-];
+import { useTickets, useTicketStats } from "@/hooks/use-social-campaigns";
 
 const priorityStyles: Record<string, string> = {
   Urgent: "bg-red-100 text-red-700",
@@ -54,10 +22,17 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function TicketsPage() {
+  const { data: tickets, isLoading } = useTickets();
+  const { data: stats } = useTicketStats();
   const [filters, setFilters] = useState({
     priority: "",
     status: "",
   });
+
+  const formatDate = (dateStr: string | undefined) => {
+    if (!dateStr) return "-";
+    return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
 
   return (
     <div className="flex-1 space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8">
@@ -85,7 +60,7 @@ export default function TicketsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-bold text-heading">5</div>
+            <div className="text-2xl font-bold text-heading">{stats?.open || 0}</div>
           </CardContent>
         </Card>
         <Card className="border border-gray-200 bg-white">
@@ -95,7 +70,7 @@ export default function TicketsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-bold text-heading">3</div>
+            <div className="text-2xl font-bold text-heading">{stats?.inProgress || 0}</div>
           </CardContent>
         </Card>
         <Card className="border border-gray-200 bg-white">
@@ -105,7 +80,7 @@ export default function TicketsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="text-2xl font-bold text-heading">87</div>
+            <div className="text-2xl font-bold text-heading">{stats?.resolved || 0}</div>
           </CardContent>
         </Card>
       </div>
@@ -164,44 +139,64 @@ export default function TicketsPage() {
                 </tr>
               </thead>
               <tbody>
-                {tickets.map((ticket) => (
-                  <tr key={ticket.id} className="border-b border-gray-100">
-                    <td className="py-3 pr-4 font-medium text-heading">
-                      {ticket.id}
-                    </td>
-                    <td className="py-3 pr-4">{ticket.subject}</td>
-                    <td className="py-3 pr-4">{ticket.customer}</td>
-                    <td className="py-3 pr-4">{ticket.assignedTo}</td>
-                    <td className="py-3 pr-4">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          priorityStyles[ticket.priority]
-                        }`}
-                      >
-                        {ticket.priority}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          statusStyles[ticket.status]
-                        }`}
-                      >
-                        {ticket.status}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4">{ticket.created}</td>
-                    <td className="py-3 pr-4">{ticket.updated}</td>
-                    <td className="py-3">
-                      <Link
-                        href={`/tickets/${ticket.id}`}
-                        className="text-blue-600 hover:text-blue-700 text-xs font-medium"
-                      >
-                        View
-                      </Link>
+                {isLoading ? (
+                  <tr>
+                    <td
+                      colSpan={9}
+                      className="py-6 text-center text-sm text-muted"
+                    >
+                      Loading tickets...
                     </td>
                   </tr>
-                ))}
+                ) : !tickets || tickets.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={9}
+                      className="py-6 text-center text-sm text-muted"
+                    >
+                      No tickets found.
+                    </td>
+                  </tr>
+                ) : (
+                  tickets.map((ticket) => (
+                    <tr key={String(ticket._id)} className="border-b border-gray-100">
+                      <td className="py-3 pr-4 font-medium text-heading">
+                        {ticket.ticketId}
+                      </td>
+                      <td className="py-3 pr-4">{ticket.subject}</td>
+                      <td className="py-3 pr-4">{ticket.customer}</td>
+                      <td className="py-3 pr-4">{ticket.assignedTo || "-"}</td>
+                      <td className="py-3 pr-4">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                            priorityStyles[ticket.priority]
+                          }`}
+                        >
+                          {ticket.priority}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-4">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                            statusStyles[ticket.status]
+                          }`}
+                        >
+                          {ticket.status}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-4">{formatDate(ticket.created_at)}</td>
+                      <td className="py-3 pr-4">{formatDate(ticket.updated_at)}</td>
+                      <td className="py-3">
+                        <Link
+                          href={`/tickets/${ticket.ticketId}`}
+                          className="text-blue-600 hover:text-blue-700 text-xs font-medium"
+                        >
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
