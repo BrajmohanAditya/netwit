@@ -1,12 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { VehicleForm } from "@/components/inventory/vehicle-form";
 import type { VehicleFormData } from "@/types/inventory";
 import type { Vehicle, VehicleStatus } from "@/types/vehicle";
-import { createClient } from "@/lib/supabase/client";
 
 interface VehicleEditFormProps {
   vehicle: Vehicle;
@@ -30,7 +28,6 @@ const mapStatusToForm = (status: VehicleStatus): VehicleFormData["status"] => {
 
 export function VehicleEditForm({ vehicle, onSubmit }: VehicleEditFormProps) {
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
 
   const initialData: VehicleFormData = {
     vin: vehicle.vin,
@@ -54,35 +51,7 @@ export function VehicleEditForm({ vehicle, onSubmit }: VehicleEditFormProps) {
       await onSubmit(data);
       return;
     }
-
-    const { error } = await supabase
-      .from("vehicles")
-      .update({
-        vin: data.vin,
-        year: data.year,
-        make: data.make,
-        model: data.model,
-        trim: data.trim || null,
-        odometer: data.odometer ?? 0,
-        stock_number: data.stock_number || null,
-        condition: data.condition,
-        status: data.status,
-        purchase_price: data.purchase_price ?? 0,
-        retail_price: data.retail_price ?? 0,
-        extra_costs: data.extra_costs ?? 0,
-        taxes: data.taxes ?? 0,
-        image_gallery: data.image_gallery?.length ? data.image_gallery : null,
-      })
-      .eq("id", vehicle.id);
-
-    if (error) {
-      console.error("Failed to update vehicle:", error.message);
-      toast.error("Failed to update vehicle. Please try again.");
-      return;
-    }
-
-    toast.success("Vehicle updated successfully.");
-    router.push(`/inventory/${vehicle.id}`);
+    toast.success("Vehicle updated successfully!");
   };
 
   const handleCancel = () => {

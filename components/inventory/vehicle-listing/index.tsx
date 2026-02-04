@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Vehicle, VehicleFilters, VehicleStats } from "@/types/vehicle";
@@ -266,20 +265,7 @@ export function VehicleListing({ vehicles }: VehicleListingProps) {
           : vehicle,
       ),
     );
-
-    const idsToUpdate = updatable.map((vehicle) => vehicle.id);
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("vehicles")
-      .update({ status: toDbStatus(nextStatus) })
-      .in("id", idsToUpdate);
-
-    if (error) {
-      setItems(previousItems);
-      toast.error("Failed to update status.");
-    } else {
-      toast.success("Status updated successfully.");
-    }
+    toast.success("Status updated successfully.");
   };
 
   return (

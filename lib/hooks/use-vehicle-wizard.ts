@@ -1,7 +1,7 @@
 // Custom hook for Add Vehicle Wizard state management
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
@@ -16,7 +16,6 @@ import {
   ValidationErrors,
 } from "@/lib/services/vehicle-form.service";
 import { generateStockNumber } from "@/lib/services/vin-decoder.service";
-import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 
 export function useVehicleWizard() {
@@ -28,7 +27,6 @@ export function useVehicleWizard() {
   const [isLoading, setIsLoading] = useState(false);
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const supabase = useMemo(() => createClient(), []);
   const createVehicle = useMutation(api.vehicles.create);
 
   // Load from localStorage only on client-side mount
@@ -130,63 +128,9 @@ export function useVehicleWizard() {
           cpo: "Certified Pre-Owned",
         };
 
-        const uploadedImages: string[] = [];
-
-        // Handle images: Upload Base64 images to Supabase Storage
-        for (const image of formData.images ?? []) {
-          if (image.startsWith("http")) {
-            uploadedImages.push(image);
-          } else if (image.startsWith("data:")) {
-            try {
-              // Convert Base64 to Blob
-              const response = await fetch(image);
-              const blob = await response.blob();
-
-              const fileExt = image.substring(
-                "data:image/".length,
-                image.indexOf(";"),
-              );
-              const fileName = `${formData.vin}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-              const filePath = `${fileName}`;
-
-              const { error: uploadError } = await supabase.storage
-                .from("vehicles")
-                .upload(filePath, blob);
-
-              if (uploadError) {
-                console.error("Error uploading image:", uploadError);
-                if (uploadError.message.includes("Bucket not found")) {
-                  toast.error(
-                    "Storage bucket 'vehicles' not found. Please create it in Supabase Dashboard.",
-                  );
-                }
-                // If bucket doesn't exist or other error, skip this image
-                continue;
-              }
-
-              const {
-                data: { publicUrl },
-              } = supabase.storage.from("vehicles").getPublicUrl(filePath);
-
-              // Detect if we are using the mock client (which returns a specific Splash ID or "mock.com" etc)
-              // If so, and we have the original base64, prefer the base64 so user sees their actual image.
-              // The mock client currently returns an Unsplash URL.
-              // We check if it matches the mock return value pattern.
-              const isMockUrl =
-                publicUrl.includes("images.unsplash.com/photo-1492144534655") ||
-                publicUrl.includes("placehold.co");
-
-              if (isMockUrl) {
-                // Use the base64 string directly
-                uploadedImages.push(image);
-              } else {
-                uploadedImages.push(publicUrl);
-              }
-            } catch (imageError) {
-              console.error("Error processing image:", imageError);
-            }
-          }
-        }
+        const uploadedImages: string[] = (formData.images ?? []).filter(
+          (image) => typeof image === "string" && image.length > 0,
+        );
 
         await createVehicle({
           stockNo: formData.stockNumber || generateStockNumber(),
@@ -225,7 +169,7 @@ export function useVehicleWizard() {
         setIsLoading(false);
       }
     },
-    [createVehicle, formData, supabase],
+    [createVehicle, formData],
   );
 
   const resetForm = useCallback(() => {

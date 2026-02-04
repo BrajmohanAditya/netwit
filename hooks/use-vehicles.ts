@@ -1,46 +1,47 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createClient } from '@/lib/supabase/client';
-import { VehicleFormData } from '@/lib/validations/vehicle';
-
-function getSupabase() {
-  return createClient();
-}
+import { api } from '@/convex/_generated/api';
+import { useConvex } from 'convex/react';
 
 export function useVehicles() {
+  const convex = useConvex();
+
   return useQuery({
     queryKey: ['vehicles'],
     queryFn: async () => {
-      const supabase = getSupabase();
-      const { data, error } = await supabase
-        .from('vehicles')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
+      return await convex.query(api.vehicles.get);
     }
   });
 }
 
 export function useCreateVehicle() {
+  const convex = useConvex();
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async (vehicle: VehicleFormData) => {
-      const supabase = getSupabase();
-      const { data, error } = await supabase
-        .from('vehicles')
-        .insert(vehicle);
-      
-      if (error) throw error;
-      return data;
+    mutationFn: async (vehicle: {
+      stockNo: string;
+      vin: string;
+      year: number;
+      make: string;
+      model: string;
+      trim?: string;
+      status: string;
+      price: number;
+      cost?: number;
+      mileage: number;
+      color: string;
+      images: string[];
+      features: string[];
+      description?: string;
+    }) => {
+      return await convex.mutation(api.vehicles.create, vehicle);
     },
     onMutate: async (newVehicle) => {
       await queryClient.cancelQueries({ queryKey: ['vehicles'] });
-      
+
       const previousVehicles = queryClient.getQueryData(['vehicles']) || [];
       queryClient.setQueryData(['vehicles'], (old: any) => [newVehicle, ...old]);
-      
+
       return { previousVehicles };
     },
     onError: (err, newVehicle, context) => {
@@ -53,27 +54,21 @@ export function useCreateVehicle() {
 }
 
 export function useUpdateVehicle() {
+  const convex = useConvex();
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ id, vehicle }: { id: string; vehicle: Partial<VehicleFormData> }) => {
-      const supabase = getSupabase();
-      const { data, error } = await supabase
-        .from('vehicles')
-        .update(vehicle)
-        .eq('id', id);
-      
-      if (error) throw error;
-      return data;
+    mutationFn: async ({ id, vehicle }: { id: string; vehicle: any }) => {
+      return await convex.mutation(api.vehicles.update, { id, ...vehicle });
     },
     onMutate: async ({ id, vehicle }) => {
       await queryClient.cancelQueries({ queryKey: ['vehicles'] });
-      
+
       const previousVehicles = queryClient.getQueryData(['vehicles']);
-      queryClient.setQueryData(['vehicles'], (old: any) => 
-        old.map((v: any) => v.id === id ? { ...v, ...vehicle } : v)
+      queryClient.setQueryData(['vehicles'], (old: any) =>
+        old.map((v: any) => v._id === id ? { ...v, ...vehicle } : v)
       );
-      
+
       return { previousVehicles };
     },
     onError: (err, variables, context) => {
@@ -86,29 +81,24 @@ export function useUpdateVehicle() {
 }
 
 export function useDeleteVehicle() {
+  const convex = useConvex();
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
-      const supabase = getSupabase();
-      const { error } = await supabase
-        .from('vehicles')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
+      return await convex.mutation(api.vehicles.deleteVehicle, { id });
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['vehicles'] });
-      
+
       const previousVehicles = queryClient.getQueryData(['vehicles']);
-      queryClient.setQueryData(['vehicles'], (old: any) => 
-        old.filter((v: any) => v.id !== id)
+      queryClient.setQueryData(['vehicles'], (old: any) =>
+        old.filter((v: any) => v._id !== id)
       );
-      
+
       return { previousVehicles };
     },
-    onError: (err, variables, context) => {
+    onError: (err, id, context) => {
       queryClient.setQueryData(['vehicles'], context?.previousVehicles);
     },
     onSettled: () => {

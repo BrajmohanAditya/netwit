@@ -1,49 +1,43 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createClient } from '@/lib/supabase/client';
-import { LeadFormData } from '@/lib/validations/lead';
-
-function getSupabase() {
-  return createClient();
-}
+import { api } from '@/convex/_generated/api';
+import { useConvex } from 'convex/react';
 
 export function useLeads() {
+  const convex = useConvex();
+
   return useQuery({
     queryKey: ['leads'],
     queryFn: async () => {
-      const supabase = getSupabase();
-      const { data, error } = await supabase
-        .from('leads')
-        .select(`
-          *,
-          customer:customers(id, name, phone, email)
-        `)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
+      return await convex.query(api.leads.get);
     }
   });
 }
 
 export function useCreateLead() {
+  const convex = useConvex();
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async (lead: LeadFormData) => {
-      const supabase = getSupabase();
-      const { data, error } = await supabase
-        .from('leads')
-        .insert(lead);
-      
-      if (error) throw error;
-      return data;
+    mutationFn: async (lead: {
+      name: string;
+      email?: string;
+      phone?: string;
+      company?: string;
+      source: string;
+      sourceDetails?: string;
+      status: string;
+      vehicleInterest?: string;
+      notes?: string;
+      assignedTo?: string;
+    }) => {
+      return await convex.mutation(api.leads.create, lead);
     },
     onMutate: async (newLead) => {
       await queryClient.cancelQueries({ queryKey: ['leads'] });
-      
+
       const previousLeads = queryClient.getQueryData(['leads']) || [];
       queryClient.setQueryData(['leads'], (old: any) => [newLead, ...old]);
-      
+
       return { previousLeads };
     },
     onError: (err, newLead, context) => {
@@ -56,29 +50,24 @@ export function useCreateLead() {
 }
 
 export function useDeleteLead() {
+  const convex = useConvex();
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
-      const supabase = getSupabase();
-      const { error } = await supabase
-        .from('leads')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
+      return await convex.mutation(api.leads.deleteLead, { id });
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['leads'] });
-      
+
       const previousLeads = queryClient.getQueryData(['leads']);
-      queryClient.setQueryData(['leads'], (old: any) => 
-        old.filter((lead: any) => lead.id !== id)
+      queryClient.setQueryData(['leads'], (old: any) =>
+        old.filter((lead: any) => lead._id !== id)
       );
-      
+
       return { previousLeads };
     },
-    onError: (err, variables, context) => {
+    onError: (err, id, context) => {
       queryClient.setQueryData(['leads'], context?.previousLeads);
     },
     onSettled: () => {
