@@ -269,7 +269,12 @@ export function useSaveBusinessSettings() {
       logoUrl?: string;
       fixedCosts?: Array<{ name: string; price: number; tax: boolean }>;
     }) => {
-      return await convex.mutation(api.marketing.saveBusinessSettings, settings);
+      const { id, ...updates } = settings;
+      type SettingsWithoutId = Omit<typeof settings, "id">;
+      return await convex.mutation(api.marketing.saveBusinessSettings, {
+        id: id as Id<"businessSettings"> | undefined,
+        ...(updates as SettingsWithoutId),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["businessSettings"] });
