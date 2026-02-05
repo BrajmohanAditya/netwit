@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/convex/_generated/api";
 import { useConvex } from "convex/react";
+import type { Id } from "@/convex/_generated/dataModel";
 
 export function useUsers() {
   const convex = useConvex();
@@ -55,7 +56,8 @@ export function useUpdateUser() {
       avatar?: string;
       status?: string;
     }) => {
-      return await convex.mutation(api.marketing.updateUser, user);
+      const { id, ...updates } = user;
+      return await convex.mutation(api.marketing.updateUser, { id: id as Id<"users">, ...updates });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
@@ -69,7 +71,7 @@ export function useDeleteUser() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      return await convex.mutation(api.marketing.deleteUser, { id });
+      return await convex.mutation(api.marketing.deleteUser, { id: id as Id<"users"> });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });

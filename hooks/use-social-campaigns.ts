@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/convex/_generated/api";
 import { useConvex } from "convex/react";
+import type { Id } from "@/convex/_generated/dataModel";
 
 export function useSocialPosts() {
   const convex = useConvex();
@@ -131,7 +132,7 @@ export function useDeleteCampaign() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      return await convex.mutation(api.marketing.deleteCampaign, { id });
+      return await convex.mutation(api.marketing.deleteCampaign, { id: id as Id<"campaigns"> });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
