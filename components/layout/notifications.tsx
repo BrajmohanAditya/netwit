@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,18 @@ const mockNotifications: Notification[] = [
 export function Notifications() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState(mockNotifications);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -55,7 +67,7 @@ export function Notifications() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 hover:bg-gray-100 rounded-md transition-colors duration-150"

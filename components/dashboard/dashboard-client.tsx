@@ -51,15 +51,15 @@ export function DashboardClient({
   const createLead = useMutation(api.leads.create);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const kanbanStatuses = [
     "Not Started",
     "In Progress",
     "Qualified",
-    "Negotiating", // Map to valid DB status? DB has: 'Not Started', 'In Progress', 'Qualified', 'Closed', 'Lost'
-    "Converted", // Map to Closed/Won?
+    "Negotiating",
+    "Converted",
   ];
-  // DB Statuses: 'Not Started', 'In Progress', 'Qualified', 'Closed', 'Lost'
   const dbStatuses = [
     "Not Started",
     "In Progress",
@@ -68,8 +68,8 @@ export function DashboardClient({
     "Lost",
   ];
 
-  const handleRefresh = async () => {
-    router.refresh();
+  const handleRefresh = () => {
+    window.location.reload();
   };
 
   const handleLeadsClick = () => {
@@ -113,8 +113,6 @@ export function DashboardClient({
     setIsLoading(true);
 
     const formData = new FormData(event.currentTarget);
-    // Handle "Vehicle interest" which is text in UI but UUID in DB.
-    // We'll prepend it to notes for now.
     const vehicleInterest = formData.get("vehicle_interest_text") as string;
     const currentNotes = formData.get("notes") as string;
     if (vehicleInterest) {
@@ -123,9 +121,6 @@ export function DashboardClient({
         `Vehicle Interest: ${vehicleInterest}\n${currentNotes}`,
       );
     }
-
-    // Remove invalid fields that shouldn't go to server action validation strictly if not needed,
-    // but our action scrapes by name.
 
     try {
       await createLead({
@@ -161,7 +156,7 @@ export function DashboardClient({
   });
 
   return (
-    <div className="flex-1 space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8">
+    <div className="flex-1 space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8" key={refreshKey}>
       {/* Header */}
       <div className="relative overflow-hidden rounded-lg bg-white shadow-elevation-2 p-4 sm:p-6 md:p-8 border border-gray-200">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.05),transparent)]" />

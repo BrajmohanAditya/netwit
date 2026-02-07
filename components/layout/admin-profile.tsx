@@ -1,12 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronDown, LogOut, User, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "react-hot-toast";
 
 export function AdminProfile() {
   const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSignOut = () => {
     toast.success("Signed out successfully!");
@@ -14,7 +26,7 @@ export function AdminProfile() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="hidden md:flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors duration-150"
@@ -35,7 +47,7 @@ export function AdminProfile() {
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-30 md:hidden"
+            className="fixed inset-0 z-30"
             onClick={() => setIsOpen(false)}
           />
           <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-elevation-3 border border-gray-200 z-40">

@@ -1,14 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
-import { Trash2 } from "lucide-react";
+import { Trash2, Phone, Mail, MessageSquare, Calendar, ClipboardList } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 interface LeadDetailModalProps {
   open: boolean;
@@ -36,6 +38,70 @@ export function LeadDetailModal({
 }: LeadDetailModalProps) {
   const createdLabel = details?.createdLabel || "2 days ago";
   const sourceLabel = details?.sourceLabel || lead?.source || "Source";
+
+  const [logCallOpen, setLogCallOpen] = useState(false);
+  const [sendEmailOpen, setSendEmailOpen] = useState(false);
+  const [sendSmsOpen, setSendSmsOpen] = useState(false);
+  const [scheduleFollowUpOpen, setScheduleFollowUpOpen] = useState(false);
+  const [scheduleTestDriveOpen, setScheduleTestDriveOpen] = useState(false);
+
+  const [callNotes, setCallNotes] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [smsMessage, setSmsMessage] = useState("");
+  const [followUpDate, setFollowUpDate] = useState("");
+  const [testDriveDate, setTestDriveDate] = useState("");
+
+  const handleLogCall = () => {
+    if (!callNotes.trim()) {
+      toast.error("Please enter call notes");
+      return;
+    }
+    toast.success("Call logged successfully");
+    setCallNotes("");
+    setLogCallOpen(false);
+  };
+
+  const handleSendEmail = () => {
+    if (!emailSubject.trim() || !emailBody.trim()) {
+      toast.error("Please fill in email subject and body");
+      return;
+    }
+    toast.success("Email sent successfully");
+    setEmailSubject("");
+    setEmailBody("");
+    setSendEmailOpen(false);
+  };
+
+  const handleSendSms = () => {
+    if (!smsMessage.trim()) {
+      toast.error("Please enter SMS message");
+      return;
+    }
+    toast.success("SMS sent successfully");
+    setSmsMessage("");
+    setSendSmsOpen(false);
+  };
+
+  const handleScheduleFollowUp = () => {
+    if (!followUpDate) {
+      toast.error("Please select a follow-up date");
+      return;
+    }
+    toast.success("Follow-up scheduled successfully");
+    setFollowUpDate("");
+    setScheduleFollowUpOpen(false);
+  };
+
+  const handleScheduleTestDrive = () => {
+    if (!testDriveDate) {
+      toast.error("Please select a test drive date");
+      return;
+    }
+    toast.success("Test drive scheduled successfully");
+    setTestDriveDate("");
+    setScheduleTestDriveOpen(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -219,17 +285,24 @@ export function LeadDetailModal({
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm">Log Call</Button>
-                <Button size="sm" variant="secondary">
+                <Button size="sm" onClick={() => setLogCallOpen(true)}>
+                  <Phone className="h-4 w-4 mr-2" />
+                  Log Call
+                </Button>
+                <Button size="sm" variant="secondary" onClick={() => setSendEmailOpen(true)}>
+                  <Mail className="h-4 w-4 mr-2" />
                   Send Email
                 </Button>
-                <Button size="sm" variant="secondary">
+                <Button size="sm" variant="secondary" onClick={() => setSendSmsOpen(true)}>
+                  <MessageSquare className="h-4 w-4 mr-2" />
                   Send SMS
                 </Button>
-                <Button size="sm" variant="ghost">
+                <Button size="sm" variant="ghost" onClick={() => setScheduleFollowUpOpen(true)}>
+                  <Calendar className="h-4 w-4 mr-2" />
                   Schedule Follow-up
                 </Button>
-                <Button size="sm" variant="ghost">
+                <Button size="sm" variant="ghost" onClick={() => setScheduleTestDriveOpen(true)}>
+                  <ClipboardList className="h-4 w-4 mr-2" />
                   Schedule Test Drive
                 </Button>
               </div>
@@ -283,6 +356,135 @@ export function LeadDetailModal({
             </TabsContent>
           </Tabs>
         </div>
+
+        {/* Log Call Dialog */}
+        <Dialog open={logCallOpen} onOpenChange={setLogCallOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Log Call</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Call Notes</label>
+                <textarea
+                  className="w-full mt-1 p-3 border rounded-lg min-h-[100px]"
+                  placeholder="Enter call notes..."
+                  value={callNotes}
+                  onChange={(e) => setCallNotes(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setLogCallOpen(false)}>Cancel</Button>
+                <Button onClick={handleLogCall}>Save</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Send Email Dialog */}
+        <Dialog open={sendEmailOpen} onOpenChange={setSendEmailOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Send Email</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Subject</label>
+                <Input
+                  className="mt-1"
+                  placeholder="Email subject"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Message</label>
+                <textarea
+                  className="w-full mt-1 p-3 border rounded-lg min-h-[150px]"
+                  placeholder="Enter email body..."
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setSendEmailOpen(false)}>Cancel</Button>
+                <Button onClick={handleSendEmail}>Send</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Send SMS Dialog */}
+        <Dialog open={sendSmsOpen} onOpenChange={setSendSmsOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Send SMS</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Message</label>
+                <textarea
+                  className="w-full mt-1 p-3 border rounded-lg min-h-[100px]"
+                  placeholder="Enter SMS message..."
+                  value={smsMessage}
+                  onChange={(e) => setSmsMessage(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setSendSmsOpen(false)}>Cancel</Button>
+                <Button onClick={handleSendSms}>Send</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Schedule Follow-up Dialog */}
+        <Dialog open={scheduleFollowUpOpen} onOpenChange={setScheduleFollowUpOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Schedule Follow-up</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Follow-up Date</label>
+                <Input
+                  className="mt-1"
+                  type="date"
+                  value={followUpDate}
+                  onChange={(e) => setFollowUpDate(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setScheduleFollowUpOpen(false)}>Cancel</Button>
+                <Button onClick={handleScheduleFollowUp}>Schedule</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Schedule Test Drive Dialog */}
+        <Dialog open={scheduleTestDriveOpen} onOpenChange={setScheduleTestDriveOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Schedule Test Drive</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Test Drive Date</label>
+                <Input
+                  className="mt-1"
+                  type="datetime-local"
+                  value={testDriveDate}
+                  onChange={(e) => setTestDriveDate(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setScheduleTestDriveOpen(false)}>Cancel</Button>
+                <Button onClick={handleScheduleTestDrive}>Schedule</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );

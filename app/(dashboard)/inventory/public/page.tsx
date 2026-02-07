@@ -119,7 +119,10 @@ export default function PurchaseFromPublicPage() {
       ? filteredHistory.filter((item) => selectedPurchases.includes(item._id))
       : filteredHistory;
 
-    if (rows.length === 0) return;
+    if (rows.length === 0) {
+      alert("No purchase history to export.");
+      return;
+    }
 
     const header = [
       "Date",
@@ -155,6 +158,7 @@ export default function PurchaseFromPublicPage() {
       .slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+    alert(`Exported ${rows.length} records to CSV.`);
   };
 
   const printForms = () => {
@@ -162,10 +166,16 @@ export default function PurchaseFromPublicPage() {
       ? filteredHistory.filter((item) => selectedPurchases.includes(item._id))
       : filteredHistory;
 
-    if (rows.length === 0) return;
+    if (rows.length === 0) {
+      alert("No purchase history to print.");
+      return;
+    }
 
     const printWindow = window.open("", "_blank", "width=900,height=700");
-    if (!printWindow) return;
+    if (!printWindow) {
+      alert("Please allow popups to print forms.");
+      return;
+    }
 
     const html = `
       <html>
@@ -223,8 +233,10 @@ export default function PurchaseFromPublicPage() {
     printWindow.document.open();
     printWindow.document.write(html);
     printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 250);
   };
 
   const handleDeletePurchase = async (id: Doc<"purchaseHistory">["_id"]) => {
@@ -300,6 +312,93 @@ export default function PurchaseFromPublicPage() {
       internalNotes: "",
     });
     alert("Purchase completed and saved.");
+  };
+
+  const handleSaveDraft = async () => {
+    if (!purchaseForm.vin.trim()) {
+      alert("VIN is required to save a draft.");
+      return;
+    }
+
+    const sellerName =
+      sellerType === "company"
+        ? purchaseForm.sellerCompany.trim()
+        : `${purchaseForm.sellerFirstName.trim()} ${purchaseForm.sellerLastName.trim()}`.trim();
+
+    const vehicleLabel = [
+      purchaseForm.year,
+      purchaseForm.make,
+      purchaseForm.model,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    await createPurchase({
+      date: purchaseForm.purchaseDate || new Date().toISOString().split("T")[0],
+      vehicle: vehicleLabel || "Vehicle",
+      vin: purchaseForm.vin.trim(),
+      price: Number(purchaseForm.purchasePrice) || 0,
+      seller: sellerName || "Unknown",
+      sellerType: sellerType === "company" ? "Company" : "Individual",
+      acceptedBy: purchaseForm.acceptedBy || "Unknown",
+      status: "Draft",
+    });
+
+    setPurchaseForm({
+      vin: "",
+      year: "",
+      make: "",
+      model: "",
+      odometer: "",
+      condition: "",
+      purchaseDate: "",
+      purchasePrice: "",
+      source: "Walk-in",
+      notes: "",
+      sellerFirstName: "",
+      sellerLastName: "",
+      sellerCompany: "",
+      sellerContact: "",
+      sellerPhone: "",
+      sellerEmail: "",
+      sellerAddress: "",
+      acceptedBy: "",
+      internalNotes: "",
+    });
+    alert("Draft saved successfully.");
+  };
+
+  const handleCancel = () => {
+    if (confirm("Are you sure you want to cancel? All unsaved changes will be lost.")) {
+      resetForm();
+      window.location.href = "/inventory";
+    }
+  };
+
+  const resetForm = () => {
+    setPurchaseForm({
+      vin: "",
+      year: "",
+      make: "",
+      model: "",
+      odometer: "",
+      condition: "",
+      purchaseDate: "",
+      purchasePrice: "",
+      source: "Walk-in",
+      notes: "",
+      sellerFirstName: "",
+      sellerLastName: "",
+      sellerCompany: "",
+      sellerContact: "",
+      sellerPhone: "",
+      sellerEmail: "",
+      sellerAddress: "",
+      acceptedBy: "",
+      internalNotes: "",
+    });
+    setSellerType("individual");
   };
 
   return (
@@ -806,10 +905,8 @@ export default function PurchaseFromPublicPage() {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-        <Link href="/inventory">
-          <Button variant="outline">Cancel</Button>
-        </Link>
-        <Button variant="outline">Save Draft</Button>
+        <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+        <Button variant="outline" onClick={handleSaveDraft}>Save Draft</Button>
         <Button
           className="bg-blue-600 hover:bg-blue-700 text-white"
           onClick={handleCompletePurchase}

@@ -1078,17 +1078,25 @@ export default function TestDrivesPage() {
 
               <div className="grid gap-2">
                 <Label htmlFor="td-signature">Signature</Label>
-                <Input
-                  id="td-signature"
-                  placeholder="Canvas or upload"
-                  value={scheduleForm.signature}
-                  onChange={(event) =>
-                    setScheduleForm((prev) => ({
-                      ...prev,
-                      signature: event.target.value,
-                    }))
-                  }
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="td-signature"
+                    type="file"
+                    accept="image/*"
+                    className="cursor-pointer"
+                    onChange={(event) =>
+                      setScheduleForm((prev) => ({
+                        ...prev,
+                        signature: event.target.files?.[0]?.name ?? "",
+                      }))
+                    }
+                  />
+                </div>
+                {scheduleForm.signature && (
+                  <p className="text-sm text-muted-foreground">
+                    Selected: {scheduleForm.signature}
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-between">

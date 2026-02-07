@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useUsers, useCreateUser } from "@/hooks/use-users";
 
 type UserStatus = "Active" | "Inactive" | "Invited";
 
@@ -153,6 +154,9 @@ export default function UsersPage() {
   );
   const [userForm, setUserForm] = useState(createEmptyUserForm());
 
+  const { data: dbUsers, isLoading } = useUsers();
+  const createUser = useCreateUser();
+
   const getFormFromUser = (user: UserRow) => {
     const [firstName, ...rest] = user.name.split(" ");
     const lastName = rest.join(" ");
@@ -171,6 +175,44 @@ export default function UsersPage() {
     setUserForm(user ? getFormFromUser(user) : createEmptyUserForm());
     setIsUserOpen(true);
   };
+
+  const handleSave = async () => {
+    if (!userForm.firstName || !userForm.lastName || !userForm.email) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    const name = `${userForm.firstName} ${userForm.lastName}`.trim();
+
+    try {
+      await createUser.mutateAsync({
+        name,
+        email: userForm.email,
+        role: userForm.role,
+        avatar: userForm.avatar || undefined,
+        status: userForm.status === "active" ? "Active" : "Inactive",
+      });
+      alert("User created successfully!");
+      setIsUserOpen(false);
+      setUserForm(createEmptyUserForm());
+    } catch (error) {
+      console.error("Failed to create user:", error);
+      alert("Failed to create user. Please try again.");
+    }
+  };
+
+  const filteredUsers = useMemo(() => {
+    if (!dbUsers) return [];
+    
+    return dbUsers.filter((user) => {
+      const matchSearch = filters.search === "" ||
+        user.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+        user.email.toLowerCase().includes(filters.search.toLowerCase());
+      const matchRole = filters.role === "" || user.role === filters.role;
+      const matchStatus = filters.status === "" || user.status === filters.status;
+      return matchSearch && matchRole && matchStatus;
+    });
+  }, [dbUsers, filters]);
 
   const isReadOnly = dialogMode === "view";
 
@@ -252,47 +294,61 @@ export default function UsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback className="text-xs">
-                        {initials(user.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {user.email}
-                  </TableCell>
-                  <TableCell>{user.role}</TableCell>
-                  <TableCell>
-                    <Badge className={statusStyles[user.status]}>
-                      {user.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{user.startedAt}</TableCell>
-                  <TableCell>{user.lastLogin}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openUserDialog("view", user)}
-                      >
-                        View
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openUserDialog("edit", user)}
-                      >
-                        Edit
-                      </Button>
-                    </div>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8">
+                    Loading users...
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : filteredUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8">
+                    No users found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredUsers.map((user) => (
+                  <TableRow key={String(user._id)}>
+                    <TableCell>
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback className="text-xs">
+                          {initials(user.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </TableCell>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {user.email}
+                    </TableCell>
+                    <TableCell>{user.role}</TableCell>
+                    <TableCell>
+                      <Badge className={statusStyles[user.status as UserStatus] || "bg-gray-100"}>
+                        {user.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{user.created_at ? new Date(user.created_at).toLocaleDateString() : "-"}</TableCell>
+                    <TableCell>-</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openUserDialog("view", user as any)}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openUserDialog("edit", user as any)}
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -681,7 +737,7 @@ export default function UsersPage() {
                 {isReadOnly ? "Close" : "Cancel"}
               </Button>
               {!isReadOnly && (
-                <Button variant="primary" onClick={() => setIsUserOpen(false)}>
+                <Button variant="primary" onClick={handleSave}>
                   Save
                 </Button>
               )}

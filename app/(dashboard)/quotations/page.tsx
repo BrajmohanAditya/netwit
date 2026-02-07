@@ -98,27 +98,74 @@ export default function QuotationsPage() {
   };
 
   const toggleSelect = (id: Id<"quotations">) => {
-    if (selectedIds.includes(id)) {
-      setSelectedIds(selectedIds.filter((item) => item !== id));
-    } else {
-      setSelectedIds([...selectedIds, id]);
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const exportQuotes = () => {
+    const rows = selectedIds.length
+      ? filteredQuotes.filter((q) => selectedIds.includes(q._id))
+      : filteredQuotes;
+
+    if (rows.length === 0) {
+      alert("No quotations to export.");
+      return;
     }
+
+    const header = [
+      "Quote #",
+      "Customer",
+      "Vehicle",
+      "Date",
+      "Expiry Date",
+      "Amount",
+      "Status",
+    ];
+    const csvRows = rows.map((q) => [
+      q.quoteNumber,
+      q.customer,
+      q.vehicle,
+      q.date,
+      q.expiryDate,
+      q.amount.toFixed(2),
+      q.status,
+    ]);
+
+    const csvContent = [header, ...csvRows]
+      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `quotations-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    alert(`Exported ${rows.length} quotations.`);
   };
 
   const handleCreateQuote = async () => {
-    const today = new Date().toISOString().slice(0, 10);
-    const nextNumber = `Q-${Date.now()}`;
+    if (!formData.customer || !formData.vehicle || !formData.amount) {
+      alert("Customer, Vehicle, and Amount are required.");
+      return;
+    }
+
+    const quoteNumber = `QT-${Date.now().toString().slice(-6)}`;
+
     await createQuote({
-      quoteNumber: nextNumber,
-      customer: formData.customer.trim(),
-      customerEmail: formData.customerEmail?.trim() || undefined,
-      vehicle: formData.vehicle.trim(),
-      date: today,
+      quoteNumber,
+      customer: formData.customer,
+      vehicle: formData.vehicle,
+      amount: Number(formData.amount),
       expiryDate: formData.expiryDate,
-      amount: Number(formData.amount || 0),
+      date: new Date().toISOString().split("T")[0],
       status: "Draft",
-      notes: formData.notes?.trim() || undefined,
+      notes: formData.notes,
     });
+
+    alert("Quote created successfully!");
     setIsCreateOpen(false);
     setFormData({
       customer: "",
@@ -135,7 +182,7 @@ export default function QuotationsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Quotations</h1>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-          <Button variant="outline" size="sm" className="w-full sm:w-auto">
+          <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={exportQuotes}>
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
