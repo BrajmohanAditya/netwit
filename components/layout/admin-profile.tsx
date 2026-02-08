@@ -4,8 +4,15 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronDown, LogOut, User, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { useConvex } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useAuth } from "@/components/auth-provider";
 
 export function AdminProfile() {
+  const router = useRouter();
+  const convex = useConvex();
+  const { user, logout, isLoading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -20,10 +27,47 @@ export function AdminProfile() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSignOut = () => {
-    toast.success("Signed out successfully!");
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isLoading, router]);
+
+  const handleSignOut = async () => {
+    try {
+      const sessionId = localStorage.getItem("sessionId");
+      if (sessionId) {
+        await convex.mutation(api.auth.deleteSession, { sessionId });
+        localStorage.removeItem("sessionId");
+      }
+      await logout();
+      toast.success("Signed out successfully!");
+      router.push("/login");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      toast.error("Failed to sign out");
+    }
     setIsOpen(false);
   };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="relative" ref={menuRef}>
@@ -32,9 +76,11 @@ export function AdminProfile() {
         className="hidden md:flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors duration-150"
       >
         <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-semibold text-sm">
-          AD
+          {getInitials(user.name)}
         </div>
-        <span className="text-sm font-medium text-heading">Admin</span>
+        <span className="text-sm font-medium text-heading">
+          {user.name}
+        </span>
         <ChevronDown
           className={cn(
             "h-4 w-4 text-gray-600 transition-transform duration-150",
@@ -43,7 +89,6 @@ export function AdminProfile() {
         />
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
         <>
           <div
@@ -52,8 +97,10 @@ export function AdminProfile() {
           />
           <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-elevation-3 border border-gray-200 z-40">
             <div className="p-3 border-b border-gray-200">
-              <p className="text-sm font-medium text-heading">Admin User</p>
-              <p className="text-xs text-muted">admin@adaptus.com</p>
+              <p className="text-sm font-medium text-heading">
+                {user.name}
+              </p>
+              <p className="text-xs text-muted truncate">{user.email}</p>
             </div>
 
             <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-body hover:bg-gray-50 transition-colors duration-150">

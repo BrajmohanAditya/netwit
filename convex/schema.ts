@@ -72,13 +72,24 @@ export default defineSchema({
     .index("by_invoice_date", ["invoice_date"]),
 
   users: defineTable({
-    name: v.string(),
     email: v.string(),
-    role: v.string(), // "Admin", "Sales", etc.
+    password: v.optional(v.string()),
+    name: v.string(),
+    role: v.string(),
     avatar: v.optional(v.string()),
-    status: v.string(), // "Active", "Inactive"
+    status: v.string(),
     created_at: v.string(),
   }).index("by_email", ["email"]),
+
+  sessions: defineTable({
+    sessionId: v.string(),
+    userId: v.string(),
+    email: v.string(),
+    name: v.string(),
+    role: v.string(),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+  }).index("by_sessionId", ["sessionId"]),
 
   tasks: defineTable({
     title: v.string(),

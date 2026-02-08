@@ -2,6 +2,7 @@ import { DashboardClient } from "@/components/dashboard/dashboard-client";
 export const dynamic = "force-dynamic";
 import { fetchDashboardMetrics } from "@/lib/services/dashboard.service";
 import { getRecentLeads } from "@/lib/actions/dashboard-stats";
+import AuthenticatedDashboard from "./auth-dashboard";
 
 export default async function DashboardPage() {
   try {
@@ -10,7 +11,7 @@ export default async function DashboardPage() {
       getRecentLeads(5),
     ]);
 
-    return <DashboardClient metrics={metrics} recentLeads={recentLeads} />;
+    return <AuthenticatedDashboard metrics={metrics} recentLeads={recentLeads} />;
   } catch (error) {
     console.error("Error loading dashboard:", error);
     return (

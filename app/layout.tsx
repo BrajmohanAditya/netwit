@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/lib/query-client";
 import { Toaster } from "react-hot-toast";
+import { ConvexClientProvider } from "@/components/convex-client-provider";
+import { AuthProvider } from "@/components/auth-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -56,8 +58,6 @@ export const viewport: Viewport = {
   ],
 };
 
-import { ConvexClientProvider } from "@/components/convex-client-provider";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -68,8 +68,10 @@ export default function RootLayout({
       <body className={`${inter.className} overflow-hidden`}>
         <ConvexClientProvider>
           <QueryProvider>
-            {children}
-            <Toaster position="top-right" />
+            <AuthProvider>
+              {children}
+              <Toaster position="top-right" />
+            </AuthProvider>
           </QueryProvider>
         </ConvexClientProvider>
       </body>
