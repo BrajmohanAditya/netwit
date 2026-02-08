@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
@@ -26,16 +26,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const checkSession = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const sessionId = localStorage.getItem("sessionId");
+      if (sessionId) {
+        const session = await convex.query(api.auth.getSession, { sessionId });
+        if (session) {
+          setUser({
+            id: session.userId,
+            email: session.email,
+            name: session.name,
+            role: session.role,
+          });
+        } else {
+          localStorage.removeItem("sessionId");
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [convex]);
+
   useEffect(() => {
     checkSession();
-  }, []);
+  }, [checkSession]);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
       const userData = await convex.query(api.auth.validateUser, { email, password });
       
       if (!userData) {
+        setIsLoading(false);
         return false;
       }
 
@@ -57,15 +85,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       return true;
-    } catch (error) {
-      console.error("Login failed:", error);
+    } catch {
       return false;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [convex]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       const sessionId = localStorage.getItem("sessionId");
       if (sessionId) {
@@ -73,38 +100,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem("sessionId");
       }
       setUser(null);
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
-
-  const checkSession = async () => {
-    setIsLoading(true);
-    try {
-      const sessionId = localStorage.getItem("sessionId");
-      if (sessionId) {
-        const session = await convex.query(api.auth.getSession, { sessionId });
-        if (session) {
-          setUser({
-            id: session.userId,
-            email: session.email,
-            name: session.name,
-            role: session.role,
-          });
-        } else {
-          localStorage.removeItem("sessionId");
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error("Session check failed:", error);
+    } catch {
       setUser(null);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [convex]);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, login, logout, checkSession }}>
